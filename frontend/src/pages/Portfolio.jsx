@@ -7,7 +7,7 @@ const fmt  = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency
 const fmtN = (n, dp = 2) => (n ?? 0).toFixed(dp)
 const sign = (n) => (n >= 0 ? '+' : '')
 
-// ─── Safe error parse (handles non-JSON / empty backend errors) ────────────────
+// ─── Safe error parse ──────────────────────────────────────────────────────────
 async function parseErr(res) {
   try { const d = await res.json(); return d.detail || `HTTP ${res.status}` }
   catch { return `HTTP ${res.status}` }
@@ -48,7 +48,7 @@ function HealthRing({ score }) {
   const color = pct >= 65 ? '#16A34A' : pct >= 40 ? '#D97706' : '#DC2626'
   const label = pct >= 65 ? 'Healthy' : pct >= 40 ? 'At Risk' : 'Critical'
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
       <svg width="110" height="110" viewBox="0 0 110 110">
         <circle cx="55" cy="55" r={R} fill="none" stroke="#F3F4F6" strokeWidth="9" />
         <circle cx="55" cy="55" r={R} fill="none" stroke={color} strokeWidth="9"
@@ -57,7 +57,7 @@ function HealthRing({ score }) {
         <text x="55" y="51" textAnchor="middle" fontSize="20" fontWeight="700" fill="#111827">{pct}</text>
         <text x="55" y="66" textAnchor="middle" fontSize="10" fill="#9CA3AF">/ 100</text>
       </svg>
-      <span className="text-xs font-semibold" style={{ color }}>{label} Portfolio</span>
+      <span style={{ fontSize: 12, fontWeight: 600, color }}>{label}</span>
     </div>
   )
 }
@@ -65,16 +65,26 @@ function HealthRing({ score }) {
 // ─── Rec badge ─────────────────────────────────────────────────────────────────
 function RecBadge({ rec }) {
   if (!rec) return null
-  const s = { Buy: 'bg-green-50 text-green-700', Hold: 'bg-amber-50 text-amber-700', Sell: 'bg-red-50 text-red-700' }
-  return <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${s[rec] || s.Hold}`}>{rec}</span>
+  const cfg = {
+    Buy:  { bg: '#F0FDF4', color: '#166534', border: '#BBF7D0' },
+    Hold: { bg: '#FFFBEB', color: '#92400E', border: '#FDE68A' },
+    Sell: { bg: '#FEF2F2', color: '#991B1B', border: '#FECACA' },
+  }
+  const c = cfg[rec] || cfg.Hold
+  return (
+    <span style={{ padding: '2px 10px', borderRadius: 100, background: c.bg, border: `1px solid ${c.border}`, color: c.color, fontSize: 11, fontWeight: 600 }}>
+      {rec}
+    </span>
+  )
 }
 
 // ─── Spinner ───────────────────────────────────────────────────────────────────
 function Spinner({ white = false, sm = false }) {
+  const sz = sm ? 14 : 16
   return (
-    <svg className={`animate-spin ${sm ? 'h-3.5 w-3.5' : 'h-4 w-4'} ${white ? 'text-white' : 'text-[#16A34A]'}`} viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+    <svg style={{ width: sz, height: sz, animation: 'spin 1s linear infinite', color: white ? '#fff' : '#16A34A' }} viewBox="0 0 24 24" fill="none">
+      <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+      <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
     </svg>
   )
 }
@@ -83,14 +93,14 @@ function Spinner({ white = false, sm = false }) {
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white border border-gray-100 rounded-xl shadow-lg px-3 py-2 text-xs">
-      <p className="text-gray-400 mb-0.5">{label}</p>
-      <p className="font-semibold text-gray-900">{fmt(payload[0].value)}</p>
+    <div style={{ background: '#fff', border: '1px solid #F3F4F6', borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '6px 10px' }}>
+      <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 2 }}>{label}</p>
+      <p style={{ fontSize: 12, fontWeight: 600, color: '#111827' }}>{fmt(payload[0].value)}</p>
     </div>
   )
 }
 
-const SUGGESTED = ['Should I rebalance?', "What's my biggest risk?", 'Which stock should I exit?']
+const SUGGESTED = ['Should I rebalance?', 'Which stocks to sell?', 'Portfolio summary']
 
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function Portfolio() {
@@ -247,11 +257,6 @@ export default function Portfolio() {
   const isLive = status.mode === 'live' && status.connected
 
   const filtered = holdings.filter(h => h.tradingsymbol.toLowerCase().includes(search.toLowerCase()))
-  const grouped  = useMemo(() => {
-    const map = {}
-    for (const h of filtered) { const ex = h.exchange || 'NSE'; if (!map[ex]) map[ex] = []; map[ex].push(h) }
-    return map
-  }, [filtered])
 
   const selectedHolding = holdings.find(h => h.tradingsymbol === selected)
   const chartData  = useMemo(() =>
@@ -259,178 +264,206 @@ export default function Portfolio() {
     [selectedHolding])
   const chartColor = selectedHolding?.pnl >= 0 ? '#16A34A' : '#DC2626'
 
+  // ─── shared style tokens ──────────────────────────────────────────────────────
+  const S = {
+    sectionLabel: {
+      fontSize: 9, fontWeight: 700, color: '#9CA3AF',
+      textTransform: 'uppercase', letterSpacing: '0.1em',
+      fontFamily: 'Inter, sans-serif',
+    },
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════════
   return (
-    <div className="h-screen flex flex-col bg-white overflow-hidden" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#FAFAF8', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
 
       {/* ── Navbar ──────────────────────────────────────────────────────────── */}
-      <nav className="flex-shrink-0 bg-white border-b border-gray-100 z-40">
-        <div className="px-5 h-14 flex items-center justify-between">
-          <button onClick={() => navigate('/')} className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#16A34A] flex items-center justify-center font-bold text-xs text-white">N</div>
-            <span className="font-bold text-base text-gray-900 tracking-tight">Nuvest</span>
-          </button>
-          <div className="hidden md:flex items-center gap-1">
-            {[
-              { label: 'Dashboard',    path: '/dashboard' },
-              { label: 'Portfolio',    path: '/portfolio', active: true },
-              { label: 'Credit Score', path: '/demo' },
-            ].map(({ label, path, active }) => (
-              <button key={label} onClick={() => navigate(path)}
-                className={`px-3.5 py-1.5 text-sm rounded-lg transition-colors ${active ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}>
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${isLive ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-600'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-green-500' : 'bg-amber-400'}`} />
-              {isLive ? `Live · ${status.user_name}` : 'Mock Data'}
-            </span>
-            {isLive ? (
-              <button onClick={handleDisconnect}
-                className="px-3.5 py-1.5 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-600 hover:border-red-200 hover:text-red-600 transition-colors">
-                Disconnect
-              </button>
-            ) : (
-              <button onClick={handleConnect} disabled={loadingConn}
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#16A34A] hover:bg-[#15803D] disabled:opacity-50 text-sm font-medium text-white transition-colors">
-                {loadingConn
-                  ? <Spinner white sm />
-                  : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>}
-                Connect Zerodha
-              </button>
-            )}
-          </div>
+      <nav style={{ flexShrink: 0, background: '#1A3A2A', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', zIndex: 40 }}>
+        <button onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer' }}>
+          <div style={{ width: 26, height: 26, borderRadius: 6, background: '#1A6B5A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff' }}>N</div>
+          <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontWeight: 600, fontSize: 17, color: '#fff' }}>Nuvest</span>
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {[
+            { label: 'Dashboard',    path: '/dashboard',  active: false },
+            { label: 'Portfolio',    path: '/portfolio',  active: true  },
+            { label: 'Credit Score', path: '/demo',       active: false },
+          ].map(({ label, path, active }) => (
+            <button key={label} onClick={() => navigate(path)}
+              style={{
+                padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer',
+                fontSize: 13, fontFamily: 'Inter, sans-serif',
+                fontWeight: active ? 700 : 400,
+                background: active ? 'rgba(255,255,255,0.12)' : 'none',
+                color: active ? '#fff' : 'rgba(255,255,255,0.65)',
+                transition: 'background 0.15s, color 0.15s',
+              }}
+              onMouseOver={e => { if (!active) { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.07)' } }}
+              onMouseOut={e  => { if (!active) { e.currentTarget.style.color = 'rgba(255,255,255,0.65)'; e.currentTarget.style.background = 'none' } }}
+            >{label}</button>
+          ))}
         </div>
       </nav>
 
       {/* ── Error banner ────────────────────────────────────────────────────── */}
       {error && (
-        <div className="flex-shrink-0 bg-red-50 border-b border-red-100 px-5 py-2 text-xs text-red-700 flex items-center justify-between">
+        <div style={{ flexShrink: 0, background: '#FEF2F2', borderBottom: '1px solid #FECACA', padding: '7px 20px', fontSize: 12, color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="ml-4 text-red-400 hover:text-red-600">✕</button>
+          <button onClick={() => setError(null)} style={{ background: 'none', border: 'none', color: '#F87171', cursor: 'pointer', fontSize: 14, lineHeight: 1 }}>✕</button>
         </div>
       )}
 
       {/* ── 3-column body ────────────────────────────────────────────────────── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
-        {/* ────────────────────────────────────────────────────────────────────
-            LEFT PANEL — 280px — holdings list
-        ──────────────────────────────────────────────────────────────────── */}
-        <aside className="w-[280px] flex-shrink-0 border-r border-gray-100 flex flex-col bg-[#FAFAF9] overflow-hidden">
+        {/* ──────────────────────────────────────────────────────────────────
+            LEFT PANEL — 160px — holdings list
+        ────────────────────────────────────────────────────────────────── */}
+        <aside style={{ width: 160, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '18px 0 0' }}>
 
           {/* Net Worth */}
-          <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-gray-100">
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Net Worth</p>
+          <div style={{ padding: '0 14px 14px' }}>
+            <p style={{ ...S.sectionLabel, marginBottom: 6 }}>Net Worth</p>
             {loadingData
-              ? <div className="h-7 w-32 bg-gray-200 rounded animate-pulse" />
-              : <p className="text-2xl font-bold text-gray-900 tracking-tight">{fmt(overview?.current_value)}</p>}
+              ? <div style={{ height: 28, width: 110, background: '#E5E7EB', borderRadius: 6, animation: 'pulse 1.5s infinite' }} />
+              : <p style={{ fontSize: 20, fontWeight: 700, color: '#0A0A0A', letterSpacing: '-0.02em', lineHeight: 1.1 }}>{fmt(overview?.current_value)}</p>
+            }
             {overview && (
-              <p className={`text-xs font-medium mt-0.5 ${overview.total_pnl >= 0 ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
-                {sign(overview.total_pnl)}{fmt(overview.total_pnl)} ({sign(overview.total_pnl_pct)}{fmtN(overview.total_pnl_pct)}%)
+              <p style={{ fontSize: 11, fontWeight: 500, marginTop: 3, color: overview.total_pnl >= 0 ? '#16A34A' : '#DC2626' }}>
+                {sign(overview.total_pnl)}{fmt(overview.total_pnl)}<br />
+                <span style={{ fontSize: 10 }}>({sign(overview.total_pnl_pct)}{fmtN(overview.total_pnl_pct)}%)</span>
               </p>
             )}
           </div>
 
           {/* Search */}
-          <div className="flex-shrink-0 px-3 py-2.5 border-b border-gray-100">
-            <div className="relative">
-              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input type="text" placeholder="Search holdings…" value={search} onChange={e => setSearch(e.target.value)}
-                className="w-full pl-7 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/20 focus:border-[#16A34A]" />
+          <div style={{ padding: '0 10px 10px' }}>
+            <div style={{ position: 'relative' }}>
+              <svg style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" placeholder="Search holdings..." value={search} onChange={e => setSearch(e.target.value)}
+                style={{ width: '100%', paddingLeft: 24, paddingRight: 8, paddingTop: 6, paddingBottom: 6, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 11, color: '#374151', outline: 'none', boxSizing: 'border-box', fontFamily: 'Inter, sans-serif' }}
+                onFocus={e => e.target.style.borderColor = '#1A6B5A'}
+                onBlur={e  => e.target.style.borderColor = '#E5E7EB'}
+              />
             </div>
           </div>
 
-          {/* Holdings */}
-          <div className="flex-1 overflow-y-auto">
+          {/* Holdings list */}
+          <div style={{ flex: 1, overflowY: 'auto' }}>
             {loadingData ? (
-              <div className="p-4 space-y-3">
+              <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 animate-pulse">
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0" />
-                    <div className="flex-1"><div className="h-3 w-20 bg-gray-200 rounded mb-1.5" /><div className="h-2.5 w-14 bg-gray-100 rounded" /></div>
-                    <div className="h-3 w-12 bg-gray-200 rounded" />
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#E5E7EB', flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ height: 10, width: 60, background: '#E5E7EB', borderRadius: 4, marginBottom: 5 }} />
+                      <div style={{ height: 8, width: 40, background: '#F3F4F6', borderRadius: 4 }} />
+                    </div>
                   </div>
                 ))}
               </div>
-            ) : Object.entries(grouped).map(([exchange, items]) => (
-              <div key={exchange}>
-                <div className="px-4 pt-3 pb-1">
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{exchange}</span>
-                </div>
-                {items.map(h => {
-                  const [bg, fg] = avatarColors(h.tradingsymbol)
-                  const isSel = selected === h.tradingsymbol
-                  return (
-                    <button key={h.tradingsymbol} onClick={() => setSelected(isSel ? null : h.tradingsymbol)}
-                      className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-left transition-colors ${isSel ? 'bg-white shadow-sm' : 'hover:bg-white/70'}`}>
-                      <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold" style={{ background: bg, color: fg }}>
-                        {h.tradingsymbol.slice(0, 2)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-gray-900 truncate">{h.tradingsymbol}</p>
-                        <p className="text-[10px] text-gray-400">{h.quantity} shares</p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className={`text-xs font-semibold ${h.pnl >= 0 ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>{sign(h.pnl)}{fmt(h.pnl)}</p>
-                        <p className={`text-[10px] ${h.day_change_percentage >= 0 ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>{sign(h.day_change_percentage)}{fmtN(h.day_change_percentage)}%</p>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            ))}
+            ) : filtered.map(h => {
+              const [bg, fg] = avatarColors(h.tradingsymbol)
+              const isSel = selected === h.tradingsymbol
+              return (
+                <button key={h.tradingsymbol}
+                  onClick={() => setSelected(isSel ? null : h.tradingsymbol)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '8px 10px 8px 11px',
+                    background: isSel ? '#fff' : 'transparent',
+                    border: 'none', borderLeft: isSel ? '3px solid #1A6B5A' : '3px solid transparent',
+                    cursor: 'pointer', textAlign: 'left', transition: 'background 0.12s',
+                    boxSizing: 'border-box',
+                  }}
+                  onMouseOver={e => { if (!isSel) e.currentTarget.style.background = 'rgba(255,255,255,0.6)' }}
+                  onMouseOut={e  => { if (!isSel) e.currentTarget.style.background = 'transparent' }}
+                >
+                  <div style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, background: bg, color: fg }}>
+                    {h.tradingsymbol.slice(0, 2)}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: '#0A0A0A', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.tradingsymbol}</p>
+                    <p style={{ fontSize: 10, color: '#9CA3AF', margin: 0 }}>{h.quantity} shares</p>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <p style={{ fontSize: 10, fontWeight: 600, margin: 0, color: h.pnl >= 0 ? '#16A34A' : '#DC2626' }}>{sign(h.pnl)}{fmt(h.pnl)}</p>
+                    <p style={{ fontSize: 9, margin: 0, color: h.day_change_percentage >= 0 ? '#16A34A' : '#DC2626' }}>{sign(h.day_change_percentage)}{fmtN(h.day_change_percentage)}%</p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Zerodha connect (moved from navbar) */}
+          <div style={{ padding: '10px 10px 14px', flexShrink: 0 }}>
+            {isLive ? (
+              <button onClick={handleDisconnect}
+                style={{ width: '100%', padding: '6px 0', background: 'none', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 10, fontWeight: 500, color: '#6B7280', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                Disconnect
+              </button>
+            ) : (
+              <button onClick={handleConnect} disabled={loadingConn}
+                style={{ width: '100%', padding: '6px 0', background: '#1A6B5A', border: 'none', borderRadius: 8, fontSize: 10, fontWeight: 600, color: '#fff', cursor: loadingConn ? 'not-allowed' : 'pointer', opacity: loadingConn ? 0.6 : 1, fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                {loadingConn ? <Spinner white sm /> : null}
+                {loadingConn ? 'Connecting…' : 'Connect Zerodha'}
+              </button>
+            )}
           </div>
         </aside>
 
-        {/* ────────────────────────────────────────────────────────────────────
+        {/* ──────────────────────────────────────────────────────────────────
             CENTER PANEL — flex-1 — stock detail
-        ──────────────────────────────────────────────────────────────────── */}
-        <main className="flex-1 overflow-y-auto bg-white">
+        ────────────────────────────────────────────────────────────────── */}
+        <main style={{ flex: 1, overflowY: 'auto', padding: '18px 16px' }}>
           {selectedHolding ? (
-            <div className="max-w-xl mx-auto px-8 py-8">
+            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 16, padding: '22px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', height: '100%', boxSizing: 'border-box', minHeight: 0 }}>
 
-              {/* Header */}
-              <div className="flex items-start justify-between mb-5">
-                <div className="flex items-center gap-3">
+              {/* Header row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   {(() => {
                     const [bg, fg] = avatarColors(selectedHolding.tradingsymbol)
                     return (
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0" style={{ background: bg, color: fg }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, background: bg, color: fg }}>
                         {selectedHolding.tradingsymbol.slice(0, 2)}
                       </div>
                     )
                   })()}
                   <div>
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <h2 className="text-xl font-bold text-gray-900">{selectedHolding.tradingsymbol}</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                      <span style={{ fontSize: 17, fontWeight: 700, color: '#0A0A0A' }}>{selectedHolding.tradingsymbol}</span>
                       {selectedHolding.recommendation && <RecBadge rec={selectedHolding.recommendation} />}
                     </div>
-                    <p className="text-xs text-gray-400">{selectedHolding.exchange} · {selectedHolding.product} · {selectedHolding.quantity} shares</p>
+                    <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
+                      {selectedHolding.exchange} · {selectedHolding.product} · {selectedHolding.quantity} shares
+                    </p>
                   </div>
                 </div>
-                <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 p-1">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <button onClick={() => setSelected(null)}
+                  style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', padding: 4, lineHeight: 1 }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
               </div>
 
               {/* Price */}
-              <div className="mb-5">
-                <p className="text-4xl font-bold text-gray-900 tracking-tight">{fmt(selectedHolding.last_price)}</p>
-                <p className={`text-sm font-medium mt-1 ${selectedHolding.day_change >= 0 ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
-                  {sign(selectedHolding.day_change)}{fmt(selectedHolding.day_change)} ({sign(selectedHolding.day_change_percentage)}{fmtN(selectedHolding.day_change_percentage)}%) today
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 36, fontWeight: 700, color: '#0A0A0A', letterSpacing: '-0.02em', margin: 0, lineHeight: 1 }}>
+                  {fmt(selectedHolding.last_price)}
+                </p>
+                <p style={{ fontSize: 13, fontWeight: 500, marginTop: 5, color: selectedHolding.day_change >= 0 ? '#16A34A' : '#DC2626' }}>
+                  {selectedHolding.day_change >= 0 ? '▲' : '▼'} {fmt(Math.abs(selectedHolding.day_change))} ({sign(selectedHolding.day_change_percentage)}{fmtN(selectedHolding.day_change_percentage)}%) today
                 </p>
               </div>
 
               {/* Chart */}
-              <div className="mb-7" style={{ height: 160 }}>
+              <div style={{ marginBottom: 20, height: 150 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor={chartColor} stopOpacity={0.12} />
+                        <stop offset="5%"  stopColor={chartColor} stopOpacity={0.1} />
                         <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
                       </linearGradient>
                     </defs>
@@ -443,149 +476,140 @@ export default function Portfolio() {
                 </ResponsiveContainer>
               </div>
 
-              {/* Stats grid */}
-              <div className="grid grid-cols-3 gap-0 rounded-xl border border-gray-100 overflow-hidden mb-5">
+              {/* 3-stat row */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', border: '1px solid #F3F4F6', borderRadius: 12, overflow: 'hidden', marginBottom: 18 }}>
                 {[
-                  { label: 'Avg Buy',     value: fmt(selectedHolding.average_price) },
-                  { label: 'Current',     value: fmt(selectedHolding.last_price) },
-                  { label: 'Quantity',    value: selectedHolding.quantity },
-                  { label: 'Invested',    value: fmt(selectedHolding.quantity * selectedHolding.average_price) },
-                  { label: 'Curr. Value', value: fmt(selectedHolding.quantity * selectedHolding.last_price) },
-                  { label: 'Total P&L',   value: `${sign(selectedHolding.pnl)}${fmt(selectedHolding.pnl)}`, colored: true, val: selectedHolding.pnl },
+                  { label: 'AVG BUY',   value: fmt(selectedHolding.average_price),                              colored: false },
+                  { label: 'INVESTED',  value: fmt(selectedHolding.quantity * selectedHolding.average_price),   colored: false },
+                  { label: 'TOTAL P&L', value: `${sign(selectedHolding.pnl)}${fmt(selectedHolding.pnl)}`,       colored: true, val: selectedHolding.pnl },
                 ].map(({ label, value, colored, val }, i) => (
-                  <div key={label} className={`px-4 py-3.5 bg-white ${i < 3 ? 'border-b border-gray-100' : ''} ${i % 3 !== 2 ? 'border-r border-gray-100' : ''}`}>
-                    <p className="text-[10px] text-gray-400 mb-1">{label}</p>
-                    <p className={`text-sm font-semibold ${colored ? (val >= 0 ? 'text-[#16A34A]' : 'text-[#DC2626]') : 'text-gray-900'}`}>{value}</p>
+                  <div key={label} style={{ padding: '12px 14px', background: '#fff', borderRight: i < 2 ? '1px solid #F3F4F6' : 'none' }}>
+                    <p style={{ ...S.sectionLabel, marginBottom: 5 }}>{label}</p>
+                    <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: colored ? (val >= 0 ? '#16A34A' : '#DC2626') : '#0A0A0A' }}>{value}</p>
                   </div>
                 ))}
               </div>
 
-              {/* AI insight */}
+              {/* AI Insight */}
               {selectedHolding.rec_reason && (
-                <div className="rounded-xl bg-gray-50 px-4 py-3.5">
-                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">AI Insight</p>
-                  <p className="text-xs text-gray-700 leading-relaxed">{selectedHolding.rec_reason}</p>
+                <div style={{ background: '#F9FAFB', borderRadius: 10, padding: '12px 14px' }}>
+                  <p style={{ ...S.sectionLabel, marginBottom: 6 }}>AI Insight</p>
+                  <p style={{ fontSize: 12, color: '#4B5563', lineHeight: 1.6, margin: 0 }}>{selectedHolding.rec_reason}</p>
                 </div>
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center px-8">
-              <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 16, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', gap: 10 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
                   <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
                 </svg>
               </div>
-              <p className="text-sm font-medium text-gray-400">Select a holding to view chart &amp; details</p>
+              <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>Select a holding to view chart &amp; details</p>
             </div>
           )}
         </main>
 
-        {/* ────────────────────────────────────────────────────────────────────
-            RIGHT PANEL — 320px — AI Analysis + Chat
-        ──────────────────────────────────────────────────────────────────── */}
-        <aside className="w-[320px] flex-shrink-0 border-l border-gray-100 flex flex-col overflow-hidden bg-white">
+        {/* ──────────────────────────────────────────────────────────────────
+            RIGHT PANEL — 220px — health + AI + chat
+        ────────────────────────────────────────────────────────────────── */}
+        <aside style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingTop: 18 }}>
 
-          {/* Top scrollable: health + AI assessment */}
-          <div className="flex-1 overflow-y-auto min-h-0">
+          {/* Top scrollable */}
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0 14px' }}>
 
             {/* Portfolio Health */}
-            <div className="px-5 pt-5 pb-4 border-b border-gray-100">
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-4">Portfolio Health</p>
-              <div className="flex justify-center mb-3">
+            <div style={{ marginBottom: 18 }}>
+              <p style={{ ...S.sectionLabel, marginBottom: 12 }}>Portfolio Health</p>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
                 <HealthRing score={healthScore} />
               </div>
               {overview && (
-                <div className="flex justify-around text-xs text-gray-500 mt-1">
-                  <span>↑ <strong className="text-[#16A34A]">{overview.top_gainer}</strong></span>
-                  <span>↓ <strong className="text-[#DC2626]">{overview.top_loser}</strong></span>
+                <div style={{ display: 'flex', justifyContent: 'space-around', fontSize: 11, color: '#6B7280', marginTop: 4 }}>
+                  <span>↑ <strong style={{ color: '#16A34A' }}>{overview.top_gainer}</strong></span>
+                  <span>↓ <strong style={{ color: '#DC2626' }}>{overview.top_loser}</strong></span>
                 </div>
               )}
             </div>
 
-            {/* AI Assessment — collapsible */}
-            <div className="border-b border-gray-100">
-              <button onClick={() => setAiExpanded(v => !v)}
-                className="w-full flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors">
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">AI Assessment</span>
-                <div className="flex items-center gap-2">
-                  {loadingAI && <Spinner sm />}
-                  {aiError && !loadingAI && <span className="w-1.5 h-1.5 rounded-full bg-red-500" />}
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                    className={`transition-transform duration-200 ${aiExpanded ? 'rotate-180' : ''}`}>
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
+            {/* AI Assessment */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <p style={{ ...S.sectionLabel, margin: 0 }}>AI Assessment</p>
+                {loadingAI && <Spinner sm />}
+              </div>
+
+              {aiError && (
+                <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 10px', fontSize: 11, color: '#DC2626', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
+                  <span style={{ lineHeight: 1.5 }}>{aiError}</span>
+                  <button onClick={() => setAiError(null)} style={{ background: 'none', border: 'none', color: '#F87171', cursor: 'pointer', fontSize: 13, lineHeight: 1, flexShrink: 0 }}>✕</button>
                 </div>
-              </button>
+              )}
 
-              {aiExpanded && (
-                <div className="px-5 pb-4 space-y-3">
-                  {aiError && (
-                    <div className="flex items-start justify-between bg-red-50 rounded-lg px-3 py-2 text-xs text-red-700">
-                      <span className="leading-relaxed">{aiError}</span>
-                      <button onClick={() => setAiError(null)} className="ml-2 text-red-400 hover:text-red-600 flex-shrink-0 mt-0.5">✕</button>
-                    </div>
-                  )}
-
-                  {analysis?.portfolio_health && (
-                    <p className="text-xs text-gray-600 leading-relaxed">{analysis.portfolio_health}</p>
-                  )}
-
-                  {analysis?.suggestions?.length > 0 && (
-                    <div className="space-y-2">
+              {analysis?.portfolio_health ? (
+                <>
+                  <p style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.65, margin: '0 0 10px' }}>{analysis.portfolio_health}</p>
+                  {analysis.suggestions?.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                       {analysis.suggestions.map((s, i) => (
-                        <div key={i} className="flex items-start gap-2.5 border-l-2 border-teal-500 bg-teal-50/50 rounded-r-lg px-3 py-2.5">
-                          <span className="text-[10px] font-bold text-teal-600 flex-shrink-0 mt-0.5">{i + 1}</span>
-                          <p className="text-xs text-gray-700 leading-relaxed">{s}</p>
+                        <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#1A6B5A', flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
+                          <p style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.6, margin: 0 }}>{s}</p>
                         </div>
                       ))}
                     </div>
                   )}
-
-                  {!analysis && !loadingAI && !aiError && (
-                    <p className="text-xs text-gray-400 text-center py-1">Run analysis to get AI recommendations</p>
-                  )}
-
-                  <button onClick={runAnalysis} disabled={loadingAI}
-                    className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#16A34A] hover:bg-[#15803D] disabled:opacity-60 text-xs font-semibold text-white transition-colors mt-1">
-                    {loadingAI ? <><Spinner white sm /><span>Analysing…</span></> : <span>↻  Run AI Analysis</span>}
-                  </button>
-                </div>
+                </>
+              ) : (
+                !loadingAI && (
+                  <p style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'center', padding: '4px 0' }}>
+                    Run analysis to get AI recommendations
+                  </p>
+                )
               )}
+
+              <button onClick={runAnalysis} disabled={loadingAI}
+                style={{ width: '100%', marginTop: 12, padding: '7px 0', background: loadingAI ? '#E5E7EB' : '#1A3A2A', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 600, color: '#fff', cursor: loadingAI ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'background 0.15s' }}
+                onMouseOver={e => { if (!loadingAI) e.currentTarget.style.background = '#1A6B5A' }}
+                onMouseOut={e  => { if (!loadingAI) e.currentTarget.style.background = '#1A3A2A' }}
+              >
+                {loadingAI ? <><Spinner white sm /><span>Analysing…</span></> : '↻ Run AI Analysis'}
+              </button>
             </div>
+
           </div>
 
-          {/* ── Chat (fixed bottom section) ───────────────────────────────── */}
-          <div className="flex-shrink-0 flex flex-col border-t border-gray-100">
+          {/* ── Chat (fixed bottom) ──────────────────────────────────────── */}
+          <div style={{ flexShrink: 0, borderTop: '1px solid #F3F4F6', display: 'flex', flexDirection: 'column' }}>
 
-            {/* Chat title */}
-            <div className="px-5 py-2.5 border-b border-gray-50">
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ask About Your Portfolio</p>
+            <div style={{ padding: '10px 14px 6px' }}>
+              <p style={{ ...S.sectionLabel, margin: 0 }}>Ask About Your Portfolio</p>
             </div>
 
-            {/* Messages window */}
-            <div className="overflow-y-auto px-3 py-2.5 space-y-2" style={{ maxHeight: 280 }}>
+            {/* Messages */}
+            <div style={{ overflowY: 'auto', padding: '4px 10px 4px', maxHeight: 200, display: 'flex', flexDirection: 'column', gap: 6 }}>
               {chatMessages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-4 text-center">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E5E7EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2">
-                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-                  </svg>
-                  <p className="text-xs text-gray-300">Ask anything about your holdings</p>
+                <div style={{ padding: '10px 0', textAlign: 'center' }}>
+                  <p style={{ fontSize: 11, color: '#D1D5DB', margin: 0 }}>Ask anything about your holdings</p>
                 </div>
               ) : chatMessages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[88%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${
-                    m.role === 'user'
-                      ? 'bg-gray-900 text-white rounded-br-sm'
-                      : 'bg-gray-100 text-gray-800 rounded-bl-sm'
-                  }`}>
+                <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                  <div style={{
+                    maxWidth: '85%', padding: '7px 10px', borderRadius: 12,
+                    fontSize: 11, lineHeight: 1.55,
+                    background: m.role === 'user' ? '#1A3A2A' : '#F3F4F6',
+                    color: m.role === 'user' ? '#fff' : '#374151',
+                    borderBottomRightRadius: m.role === 'user' ? 3 : 12,
+                    borderBottomLeftRadius:  m.role === 'user' ? 12 : 3,
+                  }}>
                     {m.content
                       ? m.content
                       : m.role === 'assistant' && chatLoading && i === chatMessages.length - 1
-                        ? <span className="flex items-center gap-1 text-gray-400">
-                            <span className="animate-bounce" style={{ animationDelay: '0ms' }}>●</span>
-                            <span className="animate-bounce" style={{ animationDelay: '150ms' }}>●</span>
-                            <span className="animate-bounce" style={{ animationDelay: '300ms' }}>●</span>
+                        ? <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#9CA3AF' }}>
+                            <span style={{ animation: 'bounce 1s infinite 0ms' }}>●</span>
+                            <span style={{ animation: 'bounce 1s infinite 150ms' }}>●</span>
+                            <span style={{ animation: 'bounce 1s infinite 300ms' }}>●</span>
                           </span>
                         : '…'}
                   </div>
@@ -594,43 +618,50 @@ export default function Portfolio() {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Suggested chips */}
+            {/* Suggestion chips */}
             {chatMessages.length === 0 && (
-              <div className="px-3 pb-2 flex flex-wrap gap-1.5">
+              <div style={{ padding: '0 10px 8px', display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                 {SUGGESTED.map(q => (
                   <button key={q} onClick={() => sendChat(q)} disabled={chatLoading}
-                    className="px-2.5 py-1 rounded-full bg-gray-50 border border-gray-200 text-[10px] text-gray-600 hover:bg-gray-100 hover:border-gray-300 transition-colors disabled:opacity-50">
-                    {q}
-                  </button>
+                    style={{ padding: '4px 9px', borderRadius: 100, background: '#fff', border: '1px solid #E5E7EB', fontSize: 10, color: '#6B7280', cursor: 'pointer', fontFamily: 'Inter, sans-serif', opacity: chatLoading ? 0.5 : 1, transition: 'border-color 0.12s' }}
+                    onMouseOver={e => e.currentTarget.style.borderColor = '#1A6B5A'}
+                    onMouseOut={e  => e.currentTarget.style.borderColor = '#E5E7EB'}
+                  >{q}</button>
                 ))}
               </div>
             )}
 
-            {/* Input */}
-            <div className="px-3 pb-3 pt-1">
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus-within:border-[#16A34A] focus-within:ring-2 focus-within:ring-[#16A34A]/10 transition-all">
-                <input
-                  ref={chatInputRef}
-                  type="text"
-                  placeholder="Ask a question…"
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() } }}
-                  disabled={chatLoading}
-                  className="flex-1 bg-transparent text-xs text-gray-800 placeholder-gray-400 focus:outline-none disabled:opacity-50"
-                />
-                <button onClick={() => sendChat()} disabled={!chatInput.trim() || chatLoading}
-                  className="w-6 h-6 rounded-lg bg-[#16A34A] disabled:bg-gray-200 flex items-center justify-center transition-colors flex-shrink-0">
-                  {chatLoading
-                    ? <Spinner white sm />
-                    : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>}
-                </button>
-              </div>
+            {/* Input row */}
+            <div style={{ padding: '0 10px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <input
+                ref={chatInputRef}
+                type="text"
+                placeholder="Ask a question…"
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() } }}
+                disabled={chatLoading}
+                style={{ flex: 1, padding: '7px 10px', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 11, color: '#374151', outline: 'none', fontFamily: 'Inter, sans-serif', opacity: chatLoading ? 0.5 : 1, transition: 'border-color 0.15s' }}
+                onFocus={e => e.target.style.borderColor = '#1A6B5A'}
+                onBlur={e  => e.target.style.borderColor = '#E5E7EB'}
+              />
+              <button onClick={() => sendChat()} disabled={!chatInput.trim() || chatLoading}
+                style={{ width: 30, height: 30, borderRadius: '50%', background: (!chatInput.trim() || chatLoading) ? '#E5E7EB' : '#1A6B5A', border: 'none', cursor: (!chatInput.trim() || chatLoading) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.15s' }}>
+                {chatLoading
+                  ? <Spinner white sm />
+                  : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>}
+              </button>
             </div>
-          </div>
 
+          </div>
         </aside>
+
       </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+      `}</style>
     </div>
   )
 }

@@ -111,6 +111,8 @@ export default function Demo() {
       if (!res.ok) throw new Error(`Server error: ${res.status}`)
       const data = await res.json()
       setResult(data)
+      localStorage.setItem('nuvest_last_result', JSON.stringify(data))
+      localStorage.setItem('nuvest_last_form', JSON.stringify(form))
     } catch (err) {
       setError(err.message)
     } finally {
