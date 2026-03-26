@@ -252,7 +252,11 @@ def analyze_portfolio(body: AnalyzeRequest = AnalyzeRequest()):
             "day_change_pct": round(h["day_change_percentage"], 2),
         })
 
-    prompt = f"""You are an expert Indian equity portfolio analyst.
+    session = _load_session() or {}
+    persona = session.get("persona")
+    persona_prefix = _persona_system_modifier(persona) + "\n\n" if persona else ""
+
+    prompt = f"""{persona_prefix}You are an expert Indian equity portfolio analyst.
 
 Portfolio summary:
 - Total invested: ₹{overview['total_invested']:,.0f}
@@ -316,6 +320,71 @@ Provide your analysis as ONLY valid JSON (no markdown, no explanation outside th
 
 
 # ---------------------------------------------------------------------------
+# POST /portfolio/persona  — save AI trader persona to session
+# ---------------------------------------------------------------------------
+class PersonaRequest(BaseModel):
+    name: str
+    investment_style: str
+    risk_tolerance: str
+    investment_time: str
+    analysis_weights: str
+
+
+def _persona_system_modifier(persona: dict) -> str:
+    """Build a persona-specific system prompt prefix from saved persona config."""
+    style   = persona.get("investment_style", "General Trader")
+    risk    = persona.get("risk_tolerance",   "Adaptable")
+    time_h  = persona.get("investment_time",  "Medium-term")
+    weights = persona.get("analysis_weights", "Balanced")
+    name    = persona.get("name", "AI Advisor")
+
+    style_desc = {
+        "General Trader":   "a well-rounded trader who balances various strategies",
+        "Day Trader":       "an aggressive day trader focused on intraday price action, short-term momentum, and technical levels. Prioritise quick entries/exits, intraday catalysts, and volume signals.",
+        "Momentum Trader":  "a momentum trader who chases high-relative-strength stocks, breakouts, and trending moves. Focus on trend continuation, 52-week highs, and sector rotation.",
+        "Value Investor":   "a disciplined value investor in the style of Warren Buffett — focused on fundamentals, margin of safety, P/E, earnings quality, and long-term compounding. Avoid speculation.",
+    }.get(style, "a balanced portfolio analyst")
+
+    risk_desc = {
+        "Conservative": "Emphasise capital preservation, downside protection, and low-volatility picks.",
+        "Adaptable":    "Balance risk and reward; adjust recommendations based on market conditions.",
+        "Aggressive":   "Prioritise maximum returns; accept higher volatility and drawdown risk.",
+    }.get(risk, "")
+
+    time_desc = {
+        "Short-term":  "All advice should target near-term (days to weeks) price moves and catalysts.",
+        "Medium-term": "Focus on 1–3 month outlooks and upcoming earnings/events.",
+        "Long-term":   "Take a multi-year perspective; ignore short-term noise and focus on durable moats.",
+    }.get(time_h, "")
+
+    weight_desc = {
+        "Technical":    "Rely primarily on chart patterns, moving averages, RSI, MACD, and support/resistance levels.",
+        "Fundamental":  "Rely primarily on earnings, revenue growth, valuations, ROE, and management quality.",
+        "Balanced":     "Combine technical signals with fundamental analysis equally.",
+    }.get(weights, "")
+
+    return (
+        f"You are '{name}', {style_desc}. "
+        f"{risk_desc} {time_desc} {weight_desc} "
+        f"Always tailor your advice to this persona and make it clearly reflect your trading style."
+    )
+
+
+@router.post("/persona")
+def save_persona(body: PersonaRequest):
+    session = _load_session() or {}
+    session["persona"] = {
+        "name":             body.name,
+        "investment_style": body.investment_style,
+        "risk_tolerance":   body.risk_tolerance,
+        "investment_time":  body.investment_time,
+        "analysis_weights": body.analysis_weights,
+    }
+    _save_session(session)
+    return {"status": "saved", "persona": session["persona"]}
+
+
+# ---------------------------------------------------------------------------
 # POST /portfolio/chat  — streaming chat with portfolio context
 # ---------------------------------------------------------------------------
 class ChatRequest(BaseModel):
@@ -338,7 +407,11 @@ def chat(body: ChatRequest):
     ]) or "  (no holdings data)"
 
     ov = body.overview or {}
-    system_prompt = f"""You are an expert Indian equity portfolio analyst for the Nuvest app.
+    session = _load_session() or {}
+    persona = session.get("persona")
+    persona_prefix = _persona_system_modifier(persona) + "\n\n" if persona else ""
+
+    system_prompt = f"""{persona_prefix}You are an expert Indian equity portfolio analyst for the Nuvest app.
 
 User's current portfolio:
 {holdings_text}

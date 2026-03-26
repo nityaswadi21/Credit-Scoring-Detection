@@ -4,6 +4,7 @@ import Demo from './pages/Demo'
 import Dashboard from './pages/Dashboard'
 import Portfolio from './pages/Portfolio'
 import TrajectoryPage from './pages/TrajectoryPage'
+import AIPersona from './pages/AIPersona'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/portfolio" element={<Portfolio />} />
         <Route path="/trajectory" element={<TrajectoryPage />} />
+        <Route path="/ai-persona" element={<AIPersona />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

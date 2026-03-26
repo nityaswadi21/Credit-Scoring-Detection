@@ -416,7 +416,7 @@ export default function Portfolio() {
         {/* ──────────────────────────────────────────────────────────────────
             CENTER PANEL — flex-1 — stock detail
         ────────────────────────────────────────────────────────────────── */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: '18px 16px' }}>
+        <main style={{ flex: 1, overflowY: 'auto', padding: '18px 16px', position: 'relative' }}>
           {selectedHolding ? (
             <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 16, padding: '22px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', height: '100%', boxSizing: 'border-box', minHeight: 0 }}>
 
@@ -509,6 +509,48 @@ export default function Portfolio() {
               <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>Select a holding to view chart &amp; details</p>
             </div>
           )}
+
+          {/* ── AI Trader Personality floating button ── */}
+          <div style={{ position: 'sticky', bottom: 16, display: 'flex', justifyContent: 'center', pointerEvents: 'none', marginTop: 16 }}>
+            <button
+              onClick={() => navigate('/ai-persona')}
+              style={{
+                pointerEvents: 'auto',
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 18px',
+                background: '#fff',
+                border: '1px solid #E5E7EB',
+                borderRadius: 100,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif',
+              }}
+            >
+              {/* Sparkle icon */}
+              <span style={{ fontSize: 16, color: '#1A6B5A', lineHeight: 1 }}>✦</span>
+              {/* Label */}
+              <span style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A', whiteSpace: 'nowrap' }}>AI Trader Personality</span>
+              {/* Avatar stack */}
+              <div style={{ display: 'flex', alignItems: 'center', marginLeft: 2 }}>
+                {[
+                  { initials: 'WB', bg: '#16A34A' },
+                  { initials: 'CW', bg: '#0F766E' },
+                  { initials: 'RD', bg: '#DC2626' },
+                ].map((a, i) => (
+                  <div key={a.initials} style={{
+                    width: 22, height: 22, borderRadius: '50%',
+                    background: a.bg, color: '#fff',
+                    fontSize: 8, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: '2px solid #fff',
+                    marginLeft: i === 0 ? 0 : -7,
+                    zIndex: 3 - i,
+                    position: 'relative',
+                  }}>{a.initials}</div>
+                ))}
+              </div>
+            </button>
+          </div>
         </main>
 
         {/* ──────────────────────────────────────────────────────────────────
