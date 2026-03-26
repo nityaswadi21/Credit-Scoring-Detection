@@ -176,7 +176,7 @@ export default function Landing() {
       }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Playfair Display, Georgia, serif', fontWeight: 600, fontSize: 18, color: '#0A0A0A' }}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: '#1A6B5A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 12, color: '#fff' }}>C</div>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: '#1A6B5A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 12, color: '#fff' }}>N</div>
           Nuvest
         </div>
 
@@ -200,14 +200,6 @@ export default function Landing() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             onClick={() => navigate('/demo')}
-            style={{ fontSize: 13, color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 500, padding: '6px 12px' }}
-            onMouseOver={e => e.target.style.color = '#0A0A0A'}
-            onMouseOut={e  => e.target.style.color = '#6B7280'}
-          >
-            Sign in
-          </button>
-          <button
-            onClick={() => navigate('/demo')}
             style={{ fontSize: 13, fontWeight: 600, color: '#fff', background: '#0A0A0A', border: 'none', borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontFamily: 'Inter, sans-serif', transition: 'background 0.15s' }}
             onMouseOver={e => e.currentTarget.style.background = '#1A6B5A'}
             onMouseOut={e  => e.currentTarget.style.background = '#0A0A0A'}
@@ -224,14 +216,13 @@ export default function Landing() {
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 700, height: 400, background: 'radial-gradient(ellipse at center, rgba(26,107,90,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
         <div style={{ position: 'relative', zIndex: 2, maxWidth: 760, margin: '0 auto', padding: '0 24px' }}>
-          {/* Pill badge */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 100, border: '1px solid rgba(26,107,90,0.3)', background: 'rgba(26,107,90,0.06)', marginBottom: 32 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#1A6B5A', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-            <span style={{ fontSize: 13, color: '#1A6B5A', fontWeight: 500 }}>AI-Powered Financial Inclusion</span>
+          {/* Brand name in place of pill badge */}
+          <div style={{ marginBottom: 32 }}>
+            <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontStyle: 'italic', fontSize: 55, fontWeight: 600, color: '#1A6B5A', letterSpacing: '-0.01em' }}>Nuvest</span>
           </div>
 
           {/* Main heading — serif */}
-          <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 'clamp(40px, 6vw, 72px)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.02em', color: '#0A0A0A', marginBottom: 24 }}>
+          <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 'clamp(28px, 4.2vw, 50px)', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.02em', color: '#0A0A0A', marginBottom: 24 }}>
             AI-powered wealth,{' '}
             <span style={{ display: 'block', color: '#1A6B5A' }}>built for every Indian investor.</span>
           </h1>

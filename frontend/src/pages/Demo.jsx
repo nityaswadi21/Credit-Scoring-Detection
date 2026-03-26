@@ -23,18 +23,65 @@ const defaultForm = {
   employment_type: 2,
 }
 
-function InputField({ label, hint, children }) {
+function Label({ children }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-[#0A0A0A] mb-1.5">{label}</label>
-      {hint && <p className="text-xs text-[#A39E98] mb-2">{hint}</p>}
+    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0A0A0A', marginBottom: 6 }}>
       {children}
-    </div>
+    </label>
   )
 }
 
-const inputClass =
-  'w-full px-4 py-3 bg-white border border-[#D5D0C8] rounded-xl text-[#0A0A0A] placeholder-[#A39E98] focus:outline-none focus:border-[#1A6B5A] focus:ring-1 focus:ring-[#1A6B5A] transition-colors text-sm'
+function Hint({ children }) {
+  return (
+    <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 5, lineHeight: 1.5 }}>{children}</p>
+  )
+}
+
+const inputStyle = {
+  width: '100%',
+  padding: '10px 14px',
+  border: '1.5px solid #E5E7EB',
+  borderRadius: 10,
+  fontSize: 14,
+  color: '#0A0A0A',
+  outline: 'none',
+  fontFamily: 'Inter, sans-serif',
+  boxSizing: 'border-box',
+  background: '#fff',
+  transition: 'border-color 0.15s',
+}
+
+function PillToggle({ options, value, onChange, cols = options.length }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8 }}>
+      {options.map(({ value: v, label }) => {
+        const selected = value === v
+        return (
+          <button
+            type="button"
+            key={v}
+            onClick={() => onChange(v)}
+            style={{
+              padding: '9px 12px',
+              borderRadius: 100,
+              border: selected ? '1.5px solid #1A6B5A' : '1.5px solid #E5E7EB',
+              background: selected ? '#1A6B5A' : '#fff',
+              color: selected ? '#fff' : '#6B7280',
+              fontSize: 13,
+              fontWeight: selected ? 600 : 500,
+              cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif',
+              transition: 'all 0.15s',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 export default function Demo() {
   const navigate = useNavigate()
@@ -72,184 +119,224 @@ export default function Demo() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] text-[#0A0A0A]">
-      {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 bg-[#FAFAF8]/90 backdrop-blur-md border-b border-[#E8E4DC]">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <button onClick={() => navigate('/')} className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#1A6B5A] flex items-center justify-center font-bold text-xs text-white">N</div>
-            <span className="font-serif font-semibold text-lg text-[#0A0A0A]">Nuvest</span>
-          </button>
-          <div className="flex items-center gap-6">
-            <button onClick={() => navigate('/dashboard')} className="text-sm text-[#6B6560] hover:text-[#0A0A0A] transition-colors">
-              Dashboard
-            </button>
-            <button onClick={() => navigate('/portfolio')} className="text-sm text-[#6B6560] hover:text-[#0A0A0A] transition-colors">
-              Portfolio
-            </button>
-          </div>
+    <div style={{ minHeight: '100vh', background: '#FAFAF8', fontFamily: 'Inter, sans-serif' }}>
+
+      {/* ── Navbar ─────────────────────────────────────────────────────── */}
+      <nav style={{
+        position: 'sticky', top: 0, zIndex: 50,
+        background: '#1A3A2A',
+        height: 60,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 32px',
+      }}>
+        <button
+          onClick={() => navigate('/')}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer' }}
+        >
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: '#1A6B5A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12, color: '#fff', fontFamily: 'Inter, sans-serif' }}>N</div>
+          <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontWeight: 600, fontSize: 18, color: '#fff' }}>Nuvest</span>
+        </button>
+        <div style={{ display: 'flex', gap: 28 }}>
+          <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'rgba(255,255,255,0.7)', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}
+            onMouseOver={e => e.currentTarget.style.color = '#fff'}
+            onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
+          >Dashboard</button>
+          <button onClick={() => navigate('/portfolio')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'rgba(255,255,255,0.7)', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}
+            onMouseOver={e => e.currentTarget.style.color = '#fff'}
+            onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
+          >Portfolio</button>
         </div>
       </nav>
 
-      <div className="pt-24 pb-16 px-6">
-        <div className="max-w-6xl mx-auto">
-
-          {/* Header */}
-          <div className="text-center mb-12">
-            <p className="text-sm text-[#1A6B5A] font-medium tracking-wide uppercase mb-3">AI Credit Scoring</p>
-            <h1 className="font-serif text-4xl font-bold text-[#0A0A0A] mb-3">Check your credit score</h1>
-            <p className="text-[#6B6560] max-w-md mx-auto">
-              Fill in your alternative data profile — no bank account or credit history needed.
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-8 items-start">
-            {/* Form */}
-            <div className="bg-white border border-[#E8E4DC] rounded-2xl p-8 shadow-sm">
-              <form onSubmit={submit} className="space-y-6">
-
-                <InputField label="UPI Transactions per Month" hint="How many digital payments do you make via UPI?">
-                  <input
-                    type="number" min={0} max={200}
-                    value={form.upi_transactions_per_month}
-                    onChange={(e) => set('upi_transactions_per_month', e.target.value)}
-                    className={inputClass}
-                  />
-                </InputField>
-
-                <InputField label="Bill Payment On-Time" hint="What fraction of utility bills do you pay on time?">
-                  <div className="space-y-2">
-                    <input
-                      type="range" min={0} max={1} step={0.01}
-                      value={form.bill_payment_on_time_pct}
-                      onChange={(e) => set('bill_payment_on_time_pct', parseFloat(e.target.value))}
-                      className="w-full accent-[#1A6B5A]"
-                    />
-                    <div className="flex justify-between text-xs text-[#A39E98]">
-                      <span>0% — Never</span>
-                      <span className="text-[#1A6B5A] font-semibold">{Math.round(form.bill_payment_on_time_pct * 100)}%</span>
-                      <span>100% — Always</span>
-                    </div>
-                  </div>
-                </InputField>
-
-                <InputField label="Rent Payment Regularity">
-                  <div className="grid grid-cols-2 gap-3">
-                    {[{ v: 0, l: 'Irregular / No rent' }, { v: 1, l: 'Consistent & regular' }].map(({ v, l }) => (
-                      <button
-                        type="button" key={v}
-                        onClick={() => set('rent_payments_regular', v)}
-                        className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
-                          form.rent_payments_regular === v
-                            ? 'bg-[#1A6B5A]/10 border-[#1A6B5A] text-[#1A6B5A]'
-                            : 'bg-white border-[#D5D0C8] text-[#6B6560] hover:border-[#A39E98]'
-                        }`}
-                      >
-                        {l}
-                      </button>
-                    ))}
-                  </div>
-                </InputField>
-
-                <InputField label="Monthly Income Estimate (₹)" hint="Approximate monthly take-home income">
-                  <input
-                    type="number" min={0} step={1000}
-                    value={form.monthly_income_estimate}
-                    onChange={(e) => set('monthly_income_estimate', e.target.value)}
-                    className={inputClass}
-                    placeholder="e.g. 35000"
-                  />
-                </InputField>
-
-                <InputField label="Mobile Recharge Frequency">
-                  <div className="grid grid-cols-3 gap-2">
-                    {RECHARGE_OPTS.map(({ value, label }) => (
-                      <button
-                        type="button" key={value}
-                        onClick={() => set('mobile_recharge_frequency', value)}
-                        className={`px-3 py-3 rounded-xl border text-xs font-medium transition-all ${
-                          form.mobile_recharge_frequency === value
-                            ? 'bg-[#1A6B5A]/10 border-[#1A6B5A] text-[#1A6B5A]'
-                            : 'bg-white border-[#D5D0C8] text-[#6B6560] hover:border-[#A39E98]'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </InputField>
-
-                <InputField label="Employment Type">
-                  <div className="grid grid-cols-3 gap-2">
-                    {EMPLOYMENT_OPTS.map(({ value, label }) => (
-                      <button
-                        type="button" key={value}
-                        onClick={() => set('employment_type', value)}
-                        className={`px-3 py-3 rounded-xl border text-xs font-medium transition-all ${
-                          form.employment_type === value
-                            ? 'bg-[#1A6B5A]/10 border-[#1A6B5A] text-[#1A6B5A]'
-                            : 'bg-white border-[#D5D0C8] text-[#6B6560] hover:border-[#A39E98]'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </InputField>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-4 bg-[#1A6B5A] hover:bg-[#155A4A] disabled:bg-[#D5D0C8] disabled:cursor-not-allowed rounded-xl font-semibold text-white text-sm transition-all shadow-sm hover:shadow-md"
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-3">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                      </svg>
-                      Calculating score…
-                    </span>
-                  ) : 'Calculate my score →'}
-                </button>
-
-                {error && (
-                  <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
-                    {error}
-                  </div>
-                )}
-              </form>
-            </div>
-
-            {/* Result panel */}
-            <div className="sticky top-24">
-              {result ? (
-                <div className="bg-white border border-[#E8E4DC] rounded-2xl p-8 space-y-8 shadow-sm animate-fade-up">
-                  <ScoreCard score={result.score} riskTier={result.risk_tier} />
-                  <div className="border-t border-[#E8E4DC] pt-8">
-                    <ShapChart factors={result.shap_factors} />
-                  </div>
-                  <button
-                    onClick={() => navigate('/dashboard')}
-                    className="w-full py-3 bg-[#F5F0E8] hover:bg-[#EDE8DF] rounded-xl text-sm font-medium text-[#0A0A0A] transition-colors border border-[#E8E4DC]"
-                  >
-                    View full dashboard →
-                  </button>
-                </div>
-              ) : (
-                <div className="bg-white border border-[#E8E4DC] rounded-2xl p-8 flex flex-col items-center justify-center text-center min-h-96 gap-4 shadow-sm">
-                  <div className="w-20 h-20 rounded-full bg-[#F5F0E8] flex items-center justify-center text-4xl">📊</div>
-                  <h3 className="text-xl font-semibold text-[#0A0A0A]">Your score will appear here</h3>
-                  <p className="text-[#A39E98] text-sm max-w-xs leading-relaxed">
-                    Fill in the form on the left and hit "Calculate" to see your AI-generated credit score with SHAP explanations.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-        </div>
+      {/* ── Subtitle ───────────────────────────────────────────────────── */}
+      <div style={{ textAlign: 'center', padding: '36px 24px 0' }}>
+        <p style={{ fontSize: 15, color: '#6B7280', maxWidth: 480, margin: '0 auto', lineHeight: 1.6 }}>
+          Fill in your alternative data profile — no bank account or credit history needed.
+        </p>
       </div>
+
+      {/* ── Two-column layout ──────────────────────────────────────────── */}
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 24px 64px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28, alignItems: 'start' }}>
+
+        {/* ── Left: Form ─────────────────────────────────────────────── */}
+        <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)', padding: 32 }}>
+          <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+            {/* UPI Transactions */}
+            <div>
+              <Label>UPI Transactions per Month</Label>
+              <input
+                type="number" min={0} max={200}
+                value={form.upi_transactions_per_month}
+                onChange={(e) => set('upi_transactions_per_month', e.target.value)}
+                style={inputStyle}
+                onFocus={e => e.target.style.borderColor = '#1A6B5A'}
+                onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+              />
+              <Hint>How many digital payments do you make via UPI each month?</Hint>
+            </div>
+
+            {/* Bill Payment Slider */}
+            <div>
+              <Label>Bill Payment On-Time</Label>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                <span style={{ fontSize: 22, fontWeight: 700, color: '#1A6B5A', fontFamily: 'Inter, sans-serif' }}>
+                  {Math.round(form.bill_payment_on_time_pct * 100)}%
+                </span>
+              </div>
+              <input
+                type="range" min={0} max={1} step={0.01}
+                value={form.bill_payment_on_time_pct}
+                onChange={(e) => set('bill_payment_on_time_pct', parseFloat(e.target.value))}
+                style={{ width: '100%', accentColor: '#1A6B5A' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                <span style={{ fontSize: 11, color: '#9CA3AF' }}>0% — Never</span>
+                <span style={{ fontSize: 11, color: '#9CA3AF' }}>100% — Always</span>
+              </div>
+            </div>
+
+            {/* Rent Payment */}
+            <div>
+              <Label>Rent Payment Regularity</Label>
+              <PillToggle
+                options={[{ value: 0, label: 'Irregular / No rent' }, { value: 1, label: 'Consistent & regular' }]}
+                value={form.rent_payments_regular}
+                onChange={(v) => set('rent_payments_regular', v)}
+                cols={2}
+              />
+            </div>
+
+            {/* Monthly Income */}
+            <div>
+              <Label>Monthly Income</Label>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#6B7280', fontWeight: 500 }}>₹</span>
+                <input
+                  type="number" min={0} step={1000}
+                  value={form.monthly_income_estimate}
+                  onChange={(e) => set('monthly_income_estimate', e.target.value)}
+                  style={{ ...inputStyle, paddingLeft: 30 }}
+                  placeholder="e.g. 35000"
+                  onFocus={e => e.target.style.borderColor = '#1A6B5A'}
+                  onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+                />
+              </div>
+              <Hint>Approximate monthly take-home income</Hint>
+            </div>
+
+            {/* Mobile Recharge */}
+            <div>
+              <Label>Mobile Recharge Frequency</Label>
+              <PillToggle
+                options={RECHARGE_OPTS}
+                value={form.mobile_recharge_frequency}
+                onChange={(v) => set('mobile_recharge_frequency', v)}
+                cols={3}
+              />
+            </div>
+
+            {/* Employment */}
+            <div>
+              <Label>Employment Type</Label>
+              <PillToggle
+                options={EMPLOYMENT_OPTS}
+                value={form.employment_type}
+                onChange={(v) => set('employment_type', v)}
+                cols={3}
+              />
+            </div>
+
+            {error && (
+              <div style={{ padding: '12px 16px', borderRadius: 10, background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontSize: 13 }}>
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: loading ? '#D1D5DB' : '#1A3A2A',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontFamily: 'Inter, sans-serif',
+                transition: 'background 0.15s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+              onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#1A6B5A' }}
+              onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#1A3A2A' }}
+            >
+              {loading ? (
+                <>
+                  <svg style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} viewBox="0 0 24 24" fill="none">
+                    <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                  Calculating score…
+                </>
+              ) : 'Calculate my score →'}
+            </button>
+          </form>
+        </div>
+
+        {/* ── Right: Result ──────────────────────────────────────────── */}
+        <div style={{ position: 'sticky', top: 76 }}>
+          {result ? (
+            <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)', padding: 32 }}>
+              <ScoreCard score={result.score} riskTier={result.risk_tier} />
+              <div style={{ borderTop: '1px solid #F3F4F6', marginTop: 28, paddingTop: 28 }}>
+                <ShapChart factors={result.shap_factors} />
+              </div>
+              <button
+                onClick={() => navigate('/dashboard')}
+                style={{ marginTop: 24, width: '100%', padding: '12px', background: '#F9FAFB', border: '1.5px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontWeight: 500, color: '#0A0A0A', cursor: 'pointer', fontFamily: 'Inter, sans-serif', transition: 'background 0.15s' }}
+                onMouseOver={e => e.currentTarget.style.background = '#F3F4F6'}
+                onMouseOut={e => e.currentTarget.style.background = '#F9FAFB'}
+              >
+                View full dashboard →
+              </button>
+            </div>
+          ) : (
+            <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)', padding: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 380, gap: 20 }}>
+              {/* Empty ring */}
+              <svg width="200" height="170" viewBox="0 0 220 190">
+                <path
+                  d={(() => {
+                    const R = 90, cx = 110, cy = 110
+                    const toRad = (d) => (d * Math.PI) / 180
+                    const arcX = (a) => cx + R * Math.cos(toRad(a))
+                    const arcY = (a) => cy + R * Math.sin(toRad(a))
+                    const a1 = -210, sweep = 240, a2 = a1 + sweep
+                    return `M ${arcX(a1)} ${arcY(a1)} A ${R} ${R} 0 1 1 ${arcX(a2)} ${arcY(a2)}`
+                  })()}
+                  fill="none" stroke="#E5E7EB" strokeWidth="14" strokeLinecap="round"
+                />
+              </svg>
+              <div style={{ textAlign: 'center', marginTop: -20 }}>
+                <p style={{ fontSize: 16, fontWeight: 600, color: '#0A0A0A', marginBottom: 8 }}>Your score will appear here</p>
+                <p style={{ fontSize: 13, color: '#9CA3AF', maxWidth: 240, lineHeight: 1.6, margin: '0 auto' }}>
+                  Fill in the form and hit "Calculate my score" to see your AI-generated credit score.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   )
 }

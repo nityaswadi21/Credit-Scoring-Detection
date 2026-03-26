@@ -33,39 +33,56 @@ export default function ShapChart({ factors }) {
   const maxAbs = Math.max(...factors.map((f) => Math.abs(f.impact)), 1)
 
   return (
-    <div className="w-full space-y-3">
-      <h3 className="text-lg font-semibold text-white mb-4">What drove your score</h3>
-      {factors.map((f, i) => {
-        const pct = (Math.abs(f.impact) / maxAbs) * 100
-        const isPos = f.direction === 'positive'
-        const label = FEATURE_LABELS[f.feature] || f.feature
+    <div style={{ width: '100%' }}>
+      {/* Section title */}
+      <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 16, fontFamily: 'Inter, sans-serif' }}>
+        Why this score?
+      </p>
 
-        return (
-          <div
-            key={f.feature}
-            className="opacity-0 animate-fade-up"
-            style={{ animationDelay: `${i * 80}ms`, animationFillMode: 'forwards' }}
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm text-gray-300">{label}</span>
-              <span className={`text-sm font-semibold tabular-nums ${isPos ? 'text-emerald-400' : 'text-red-400'}`}>
-                {isPos ? '+' : ''}{f.impact.toFixed(1)}
-              </span>
-            </div>
-            <div className="h-2 rounded-full bg-gray-800 overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-700 ${isPos ? 'bg-emerald-500' : 'bg-red-500'}`}
-                style={{
-                  width: animated ? `${pct}%` : '0%',
-                  transitionDelay: `${i * 80}ms`,
-                }}
-              />
-            </div>
-          </div>
-        )
-      })}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {factors.map((f, i) => {
+          const pct = (Math.abs(f.impact) / maxAbs) * 100
+          const isPos = f.direction === 'positive'
+          const label = FEATURE_LABELS[f.feature] || f.feature
 
-      <p className="text-xs text-gray-600 pt-3 border-t border-gray-800">
+          return (
+            <div key={f.feature}>
+              {/* Label row */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 13, color: '#374151', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
+                  {label}
+                </span>
+                <span style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: isPos ? '#1A6B5A' : '#DC2626',
+                  fontFamily: 'Inter, sans-serif',
+                  fontVariantNumeric: 'tabular-nums',
+                  minWidth: 44,
+                  textAlign: 'right',
+                }}>
+                  {isPos ? '+' : ''}{f.impact.toFixed(1)}
+                </span>
+              </div>
+
+              {/* Bar */}
+              <div style={{ height: 7, borderRadius: 100, background: '#F3F4F6', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    height: '100%',
+                    borderRadius: 100,
+                    background: isPos ? '#1A6B5A' : '#EF4444',
+                    width: animated ? `${pct}%` : '0%',
+                    transition: `width 0.6s cubic-bezier(0.34,1.1,0.64,1) ${i * 60}ms`,
+                  }}
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 16, paddingTop: 14, borderTop: '1px solid #F3F4F6', lineHeight: 1.6, fontFamily: 'Inter, sans-serif' }}>
         SHAP values show each factor's contribution to your score relative to the average prediction.
       </p>
     </div>
