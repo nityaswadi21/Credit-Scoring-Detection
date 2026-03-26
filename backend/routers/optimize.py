@@ -39,6 +39,8 @@ class FeatureInput(BaseModel):
     utility_streak:     float
     total_volume:       float
     recharge_count:     float
+    expenditure_ratio:  float = 0.60
+    savings_rate:       float = 0.20
 
 
 # ---------------------------------------------------------------------------

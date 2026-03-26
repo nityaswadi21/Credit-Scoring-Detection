@@ -77,6 +77,8 @@ const FEAT_LABEL = {
   avg_amount:         'Avg Txn Amount',
   amount_volatility:  'Amount Volatility',
   txn_freq_trend:     'Txn Trend',
+  expenditure_ratio:  'Monthly Expenditure',
+  savings_rate:       'Savings Rate',
 }
 
 function Card({ children, style = {} }) {
@@ -107,6 +109,7 @@ function Spinner({ size = 16 }) {
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
+  const recsPoint = payload.find(p => p.dataKey === 'With Recs' && p.value != null)
   return (
     <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: C.text, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
       <p style={{ color: C.muted, margin: '0 0 6px', fontWeight: 500 }}>{label}</p>
@@ -115,6 +118,16 @@ function ChartTooltip({ active, payload, label }) {
           {p.name}: <strong>{p.value}</strong>
         </p>
       ))}
+      {recsPoint && recsPoint.payload.projRatio != null && (
+        <div style={{ marginTop: 6, paddingTop: 6, borderTop: `1px solid ${C.border}` }}>
+          <p style={{ color: C.muted, margin: '2px 0', fontSize: 11 }}>
+            Expenditure: <strong>{Math.round(recsPoint.payload.projRatio * 100)}% of income</strong>
+          </p>
+          <p style={{ color: C.muted, margin: '2px 0', fontSize: 11 }}>
+            Savings rate: <strong>{Math.round(recsPoint.payload.projSavings * 100)}%</strong>
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -209,17 +222,28 @@ export default function TrajectoryPage() {
     finally { setLoadingPlan(false) }
   }
 
+  // Projected expenditure/savings arrays for tooltip (same formula as backend _apply_optimistic_n)
+  const baseRatio    = activeFeatures?.expenditure_ratio ?? 0.60
+  const baseSavings  = activeFeatures?.savings_rate      ?? 0.20
+
   // Chart data
   const chartData = trajData
-    ? Array.from({ length: chartMonths + 1 }, (_, m) => ({
-        label:       monthLabel(today, m),
-        month:       m,
-        Baseline:    m === 0 ? trajData.current_score : (trajData.baseline_scores[m - 1] ?? null),
-        'With Plan': m === 0 ? trajData.current_score : (trajData.optimistic_scores[m - 1] ?? null),
-        'With Recs': planData
-          ? (m === 0 ? planData.current_score : (planData.optimistic_scores[m - 1] ?? null))
-          : null,
-      }))
+    ? Array.from({ length: chartMonths + 1 }, (_, m) => {
+        const progress   = chartMonths > 0 ? m / chartMonths : 0
+        const projRatio   = planData ? Math.max(0.20, baseRatio   - 0.05 * progress) : null
+        const projSavings = planData ? Math.min(0.60, baseSavings + 0.04 * progress) : null
+        return {
+          label:       monthLabel(today, m),
+          month:       m,
+          projRatio,
+          projSavings,
+          Baseline:    m === 0 ? trajData.current_score : (trajData.baseline_scores[m - 1] ?? null),
+          'With Plan': m === 0 ? trajData.current_score : (trajData.optimistic_scores[m - 1] ?? null),
+          'With Recs': planData
+            ? (m === 0 ? planData.current_score : (planData.optimistic_scores[m - 1] ?? null))
+            : null,
+        }
+      })
     : []
 
   const targetLabel = planData ? monthLabel(today, planData.months_available) : null

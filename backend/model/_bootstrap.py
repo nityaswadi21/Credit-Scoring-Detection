@@ -20,12 +20,14 @@ FEATURE_COLS = [
     "avg_txn_freq", "txn_freq_trend", "consistency_score", "recency_score",
     "category_diversity", "avg_amount", "amount_volatility", "fail_ratio",
     "utility_streak", "total_volume", "recharge_count",
+    "expenditure_ratio", "savings_rate",
 ]
 
 # Demo persona feature vectors (same order as FEATURE_COLS)
-_PRIYA = [28, 3,   0.18, 1.0,  8, 950,  200, 0.02, 1.0,  45000, 6]
-_RAVI  = [12, -1,  0.09, 0.83, 4, 420,  380, 0.09, 0.67, 18000, 3]
-_ANAND = [5,  -3,  0.04, 0.5,  2, 180,  210, 0.28, 0.17, 4000,  1]
+#                       freq  trend  consist  recency  catdiv  amt   vol   fail   util   vol2   rech  exp_r  sav_r
+_PRIYA = [28,  3,   0.18, 1.0,  8, 950,  200, 0.02, 1.0,  45000, 6, 0.40, 0.60]
+_RAVI  = [12, -1,   0.09, 0.83, 4, 420,  380, 0.09, 0.67, 18000, 3, 0.65, 0.35]
+_ANAND = [5,  -3,   0.04, 0.5,  2, 180,  210, 0.28, 0.17, 4000,  1, 0.88, 0.12]
 
 # Target default probabilities -> scores 780, 600, 420
 _PRIYA_PROB = 0.200
@@ -38,7 +40,8 @@ def _sigmoid(x):
 
 
 def _risk_logit(fail_ratio, consistency_score, utility_streak,
-                avg_txn_freq, recency_score, category_diversity):
+                avg_txn_freq, recency_score, category_diversity,
+                expenditure_ratio, savings_rate):
     # General background formula.  Intercept calibrated to Ravi -> logit 0.
     return (
         1.6  * fail_ratio
@@ -47,6 +50,8 @@ def _risk_logit(fail_ratio, consistency_score, utility_streak,
         - 0.04 * avg_txn_freq
         - 0.6  * recency_score
         - 0.08 * (category_diversity - 1) / 9
+        + 0.9  * expenditure_ratio
+        - 0.7  * savings_rate
         + 1.505
     )
 
@@ -64,9 +69,12 @@ def _generate_background(n=4000, seed=42):
     txn_freq_trend     = rng.normal(0, 3, n).clip(-10, 10)
     total_volume       = avg_txn_freq * avg_amount * rng.uniform(0.7, 1.3, n)
     recharge_count     = rng.poisson(4, n).clip(0, 12).astype(float)
+    expenditure_ratio  = rng.beta(4, 3, n).clip(0.20, 0.95)
+    savings_rate       = (1.0 - expenditure_ratio).clip(0.05, 0.80)
 
     logit = _risk_logit(fail_ratio, consistency_score, utility_streak,
-                        avg_txn_freq, recency_score, category_diversity)
+                        avg_txn_freq, recency_score, category_diversity,
+                        expenditure_ratio, savings_rate)
     prob  = _sigmoid(logit + rng.normal(0, 0.05, n)).clip(0.01, 0.99)
 
     X = pd.DataFrame({
@@ -81,6 +89,8 @@ def _generate_background(n=4000, seed=42):
         "utility_streak":     utility_streak,
         "total_volume":       total_volume,
         "recharge_count":     recharge_count,
+        "expenditure_ratio":  expenditure_ratio,
+        "savings_rate":       savings_rate,
     })[FEATURE_COLS]
     return X, prob
 
@@ -92,7 +102,11 @@ def _perturb(base_vals, n, seed, scale=0.06):
     noise = rng.normal(0, scale, (n, len(arr)))
     samples = arr + arr * noise
     samples = samples.clip(0)
-    return pd.DataFrame(samples, columns=FEATURE_COLS)
+    df = pd.DataFrame(samples, columns=FEATURE_COLS)
+    # Keep expenditure_ratio and savings_rate in [0,1]
+    df["expenditure_ratio"] = df["expenditure_ratio"].clip(0.10, 0.99)
+    df["savings_rate"]      = df["savings_rate"].clip(0.01, 0.90)
+    return df
 
 
 def _build_anchors(n_per_persona=80):

@@ -3,17 +3,20 @@ import { useNavigate } from 'react-router-dom'
 import ScoreCard from '../components/ScoreCard'
 import ShapChart from '../components/ShapChart'
 
-// Map 6 form fields → 11 trajectory model features
+// Map form fields → 13 trajectory model features
 function deriveFeatures(form) {
-  const txn     = Number(form.upi_transactions_per_month) || 0
-  const onTime  = Number(form.bill_payment_on_time_pct)   || 0
-  const income  = Number(form.monthly_income_estimate)    || 1
-  const recharge = Number(form.mobile_recharge_frequency) || 0  // 0=rarely,1=monthly,2=weekly+
-  const emp     = Number(form.employment_type)            || 0  // 0=unemployed,1=freelance,2=salaried
-  const rent    = Number(form.rent_payments_regular)      || 0
+  const txn      = Number(form.upi_transactions_per_month) || 0
+  const onTime   = Number(form.bill_payment_on_time_pct)   || 0
+  const income   = Number(form.monthly_income_estimate)    || 1
+  const expenditure = Number(form.monthly_expenditure)     || income * 0.6
+  const recharge = Number(form.mobile_recharge_frequency)  || 0
+  const emp      = Number(form.employment_type)            || 0
+  const rent     = Number(form.rent_payments_regular)      || 0
 
-  const rechargeCount = [1, 3, 6][recharge] ?? 1
-  const avgAmount     = income / Math.max(txn, 1)
+  const rechargeCount     = [1, 3, 6][recharge] ?? 1
+  const avgAmount         = income / Math.max(txn, 1)
+  const expenditure_ratio = Math.min(1.0, Math.max(0.0, expenditure / income))
+  const savings_rate      = Math.max(0.0, Math.min(1.0, 1.0 - expenditure_ratio))
 
   return {
     avg_txn_freq:       txn,
@@ -27,6 +30,8 @@ function deriveFeatures(form) {
     utility_streak:     Math.min(1.0, rent * 0.5 + rechargeCount / 8),
     total_volume:       income,
     recharge_count:     rechargeCount,
+    expenditure_ratio,
+    savings_rate,
   }
 }
 
@@ -46,6 +51,7 @@ const defaultForm = {
   bill_payment_on_time_pct: 0.88,
   rent_payments_regular: 1,
   monthly_income_estimate: 35000,
+  monthly_expenditure: 21000,
   mobile_recharge_frequency: 1,
   employment_type: 2,
 }
@@ -254,6 +260,37 @@ export default function Demo() {
                 />
               </div>
               <Hint>Approximate monthly take-home income</Hint>
+            </div>
+
+            {/* Monthly Expenditure */}
+            <div>
+              <Label>Monthly Expenditure</Label>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#6B7280', fontWeight: 500 }}>₹</span>
+                <input
+                  type="number" min={0} step={1000}
+                  value={form.monthly_expenditure}
+                  onChange={(e) => set('monthly_expenditure', e.target.value)}
+                  style={{ ...inputStyle, paddingLeft: 30 }}
+                  placeholder="e.g. 21000"
+                  onFocus={e => e.target.style.borderColor = '#1A6B5A'}
+                  onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+                />
+              </div>
+              {(() => {
+                const income = Number(form.monthly_income_estimate) || 1
+                const exp    = Number(form.monthly_expenditure) || 0
+                const ratio  = Math.min(1, exp / income)
+                const pct    = Math.round(ratio * 100)
+                const savPct = Math.max(0, 100 - pct)
+                const color  = pct < 40 ? '#1A6B5A' : pct < 60 ? '#6B7280' : pct < 80 ? '#d4820a' : '#c0392b'
+                const label  = pct < 40 ? 'Excellent saver' : pct < 60 ? 'Moderate' : pct < 80 ? 'High spender' : 'Financially stressed'
+                return (
+                  <p style={{ fontSize: 12, color, marginTop: 5, fontWeight: 500 }}>
+                    {pct}% of income spent · saving {savPct}% — <span style={{ fontStyle: 'italic' }}>{label}</span>
+                  </p>
+                )
+              })()}
             </div>
 
             {/* Mobile Recharge */}

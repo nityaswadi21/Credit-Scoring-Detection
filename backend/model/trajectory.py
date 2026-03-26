@@ -31,6 +31,7 @@ FEATURE_COLS = [
     "avg_txn_freq", "txn_freq_trend", "consistency_score", "recency_score",
     "category_diversity", "avg_amount", "amount_volatility", "fail_ratio",
     "utility_streak", "total_volume", "recharge_count",
+    "expenditure_ratio", "savings_rate",
 ]
 
 IMPROVEMENT_TIPS = {
@@ -40,6 +41,8 @@ IMPROVEMENT_TIPS = {
     "category_diversity": "Spend across 2 more merchant categories",
     "avg_txn_freq":       "Make 5 more transactions this month",
     "recency_score":      "Keep your UPI account active this month",
+    "expenditure_ratio":  "Reduce monthly spending by 10% of your income",
+    "savings_rate":       "Save an additional 8% of your income this month",
 }
 
 _ACTION_DELTAS = {
@@ -49,6 +52,8 @@ _ACTION_DELTAS = {
     "category_diversity": +2,
     "avg_txn_freq":       +5,
     "recency_score":      +0.17,
+    "expenditure_ratio":  -0.10,
+    "savings_rate":       +0.08,
 }
 
 _MODEL_PATH = Path(__file__).parent / "credit_model.joblib"
@@ -113,6 +118,18 @@ _FEATURE_META = {
         "direction": "up",
         "effort_months": 1,
     },
+    "expenditure_ratio": {
+        "label": "Monthly Expenditure",
+        "description": "Reduce monthly spending to below 60% of your income to improve your financial health score",
+        "direction": "down",
+        "effort_months": 2,
+    },
+    "savings_rate": {
+        "label": "Savings Rate",
+        "description": "Save an additional 8% of your income each month by cutting discretionary expenses",
+        "direction": "up",
+        "effort_months": 2,
+    },
 }
 
 _MONTHLY_ACTION_POOLS = {
@@ -140,6 +157,14 @@ _MONTHLY_ACTION_POOLS = {
     "recency_score": [
         "Make at least one UPI transaction every week",
         "Keep your UPI account active with regular small payments",
+    ],
+    "expenditure_ratio": [
+        "Cut one discretionary expense this month (dining out, subscriptions)",
+        "Track daily spending to identify where to reduce by 10%",
+    ],
+    "savings_rate": [
+        "Transfer 8% of income to savings account at month start",
+        "Set up an auto-save rule on your bank app",
     ],
 }
 
@@ -189,6 +214,8 @@ _FEATURE_OPTIMA = {
     "category_diversity": 10.0,
     "avg_txn_freq":       35.0,
     "recency_score":      1.0,
+    "expenditure_ratio":  0.20,   # floor: spend at least 20% of income
+    "savings_rate":       0.60,   # cap: save up to 60% of income
 }
 
 # Maximum realistic improvement per calendar month (per feature)
@@ -199,9 +226,11 @@ _MONTHLY_CAPS = {
     "category_diversity": 1.0,    # add at most 1 category/month
     "avg_txn_freq":       4.0,    # add at most 4 txns/month
     "recency_score":      0.17,   # effectively 1 month = full cycle
+    "expenditure_ratio":  0.05,   # reduce by at most 5pp/month
+    "savings_rate":       0.04,   # increase by at most 4pp/month
 }
 
-_FEATURE_DOWN = {"fail_ratio"}   # lower is better
+_FEATURE_DOWN = {"fail_ratio", "expenditure_ratio"}   # lower is better
 
 
 def _apply_optimistic_n(features: pd.Series, month: int, total_months: int) -> pd.Series:
@@ -253,6 +282,10 @@ def _fmt_feature(feature: str, value: float) -> str:
         return f"{int(round(value))} categories"
     if feature == "avg_txn_freq":
         return f"{round(value, 1)} txns/mo"
+    if feature == "expenditure_ratio":
+        return f"{round(value * 100, 1)}% of income"
+    if feature == "savings_rate":
+        return f"Saving {round(value * 100, 1)}%"
     return str(round(value, 2))
 
 
