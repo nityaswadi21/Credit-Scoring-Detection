@@ -14,7 +14,7 @@ router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
 KITE_API_KEY  = os.getenv("KITE_API_KEY", "")
 KITE_API_SECRET = os.getenv("KITE_API_SECRET", "")
-GROK_API_KEY  = os.getenv("GROK_API_KEY", "")
+GROQ_API_KEY  = os.getenv("GROQ_API_KEY", "")
 
 # session.json lives in backend/ (parent of routers/)
 SESSION_FILE = Path(__file__).resolve().parent.parent / "session.json"
@@ -228,8 +228,8 @@ class AnalyzeRequest(BaseModel):
 
 @router.post("/analyze")
 def analyze_portfolio(body: AnalyzeRequest = AnalyzeRequest()):
-    if not GROK_API_KEY:
-        raise HTTPException(400, "GROK_API_KEY is not set. Add it to backend/.env.")
+    if not GROQ_API_KEY:
+        raise HTTPException(400, "GROQ_API_KEY is not set. Add it to backend/.env.")
 
     resp     = get_holdings(mock=body.mock)
     holdings = resp["holdings"]
@@ -280,9 +280,9 @@ Provide your analysis as ONLY valid JSON (no markdown, no explanation outside th
 }}"""
 
     try:
-        client   = OpenAI(api_key=GROK_API_KEY, base_url="https://api.x.ai/v1")
+        client   = OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
         response = client.chat.completions.create(
-            model="grok-3-mini",
+            model="llama-3.3-70b-versatile",
             max_tokens=2048,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -293,9 +293,9 @@ Provide your analysis as ONLY valid JSON (no markdown, no explanation outside th
                 raw = raw[4:]
         analysis = json.loads(raw.strip())
     except json.JSONDecodeError as e:
-        raise HTTPException(502, f"Grok returned non-JSON: {e}")
+        raise HTTPException(502, f"Groq returned non-JSON: {e}")
     except Exception as e:
-        raise HTTPException(502, f"Grok API error: {e}")
+        raise HTTPException(502, f"Groq API error: {e}")
 
     rec_map = {r["symbol"]: r for r in analysis.get("stock_recommendations", [])}
     for h in holdings:
