@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(/c/Users/Vignesh/anaconda3/python.exe -c \":*)"
+      "Bash(/c/Users/Vignesh/anaconda3/python.exe -c \":*)",
+      "Bash(findstr :8001)",
+      "Bash(tasklist /fi \"PID eq 4212\")",
+      "Bash(tasklist)",
+      "Bash(python -c \":*)"
     ]
   }
 }
