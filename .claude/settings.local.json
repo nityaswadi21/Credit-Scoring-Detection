@@ -3,7 +3,18 @@
     "allow": [
       "Bash(python data/generate_data.py)",
       "Bash(python -m ml.model)",
-      "Bash(uvicorn main:app --reload --port 8000)"
+      "Bash(uvicorn main:app --reload --port 8000)",
+      "Bash(curl -s http://localhost:8000/portfolio/holdings?mock=true)",
+      "Bash(python -m json.tool)",
+      "Bash(python -c \"from routers import portfolio; print\\(''OK''\\)\")",
+      "Bash(netstat -ano)",
+      "Bash(curl -s http://localhost:8000/openapi.json)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(list\\(d[''''paths''''].keys\\(\\)\\)\\)\")",
+      "Bash(taskkill /PID 24984 /F)",
+      "Bash(curl -s http://localhost:8001/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
+      "Bash(python -c \"from routers import portfolio; import json; print\\(json.dumps\\([h[''tradingsymbol''] for h in portfolio.MOCK_HOLDINGS]\\)\\)\")",
+      "Bash(cmd /c \"taskkill /PID 29092 /F\")"
     ]
   }
 }

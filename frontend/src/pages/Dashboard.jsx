@@ -5,24 +5,24 @@ const mockScore = { score: 712, risk_tier: 'Low' }
 
 function PlaceholderCard({ icon, title, subtitle, tag }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 flex flex-col gap-4">
+    <div className="bg-white border border-[#E8E4DC] rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
       <div className="flex items-start justify-between">
-        <div className="w-12 h-12 rounded-xl bg-gray-800 flex items-center justify-center text-2xl">{icon}</div>
+        <div className="w-12 h-12 rounded-xl bg-[#F5F0E8] flex items-center justify-center text-2xl">{icon}</div>
         {tag && (
-          <span className="px-2.5 py-1 text-xs rounded-full bg-blue-600/15 border border-blue-600/30 text-blue-400 font-medium">
+          <span className="px-2.5 py-1 text-xs rounded-full bg-[#1A6B5A]/10 border border-[#1A6B5A]/20 text-[#1A6B5A] font-medium">
             {tag}
           </span>
         )}
       </div>
       <div>
-        <h3 className="font-semibold text-lg mb-1">{title}</h3>
-        <p className="text-sm text-gray-500">{subtitle}</p>
+        <h3 className="font-semibold text-lg mb-1 text-[#0A0A0A]">{title}</h3>
+        <p className="text-sm text-[#A39E98]">{subtitle}</p>
       </div>
-      <div className="mt-auto pt-4 border-t border-gray-800">
-        <div className="h-2 rounded-full bg-gray-800 animate-shimmer" />
+      <div className="mt-auto pt-4 border-t border-[#E8E4DC]">
+        <div className="h-2 rounded-full bg-[#F5F0E8] animate-shimmer" />
         <div className="grid grid-cols-3 gap-2 mt-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-16 rounded-lg bg-gray-800/60" />
+            <div key={i} className="h-16 rounded-lg bg-[#F5F0E8]" />
           ))}
         </div>
       </div>
@@ -34,16 +34,19 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#FAFAF8] text-[#0A0A0A]">
       {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 bg-gray-950/80 backdrop-blur border-b border-gray-800">
+      <nav className="fixed top-0 w-full z-50 bg-[#FAFAF8]/90 backdrop-blur-md border-b border-[#E8E4DC]">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <button onClick={() => navigate('/')} className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-sm">C</div>
-            <span className="font-semibold text-lg">CreditAI</span>
+          <button onClick={() => navigate('/')} className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-[#1A6B5A] flex items-center justify-center font-bold text-xs text-white">N</div>
+            <span className="font-serif font-semibold text-lg text-[#0A0A0A]">Nuvest</span>
           </button>
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/demo')} className="text-sm text-gray-400 hover:text-white transition-colors">
+          <div className="flex items-center gap-6">
+            <button onClick={() => navigate('/portfolio')} className="text-sm text-[#6B6560] hover:text-[#0A0A0A] transition-colors">
+              Portfolio
+            </button>
+            <button onClick={() => navigate('/demo')} className="text-sm text-[#6B6560] hover:text-[#0A0A0A] transition-colors">
               Recalculate score
             </button>
           </div>
@@ -56,8 +59,8 @@ export default function Dashboard() {
           {/* Header row */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Your Dashboard</p>
-              <h1 className="text-3xl font-bold">Financial Overview</h1>
+              <p className="text-sm text-[#A39E98] mb-1">Your Dashboard</p>
+              <h1 className="font-serif text-3xl font-bold text-[#0A0A0A]">Financial Overview</h1>
             </div>
             <div className="flex items-center gap-4">
               <RiskBadge tier={mockScore.risk_tier} size="lg" />
@@ -65,15 +68,16 @@ export default function Dashboard() {
           </div>
 
           {/* Score summary banner */}
-          <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-blue-600/15 to-violet-600/10 border border-blue-600/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="mb-8 p-6 rounded-2xl bg-[#1A6B5A]/8 border border-[#1A6B5A]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+            style={{ background: 'rgba(26,107,90,0.06)' }}>
             <div>
-              <p className="text-sm text-blue-400 mb-1">Your current credit score</p>
-              <div className="text-5xl font-bold text-white">{mockScore.score}</div>
-              <p className="text-gray-400 text-sm mt-1">Based on your most recent profile submission</p>
+              <p className="text-sm text-[#1A6B5A] font-medium mb-1">Your current credit score</p>
+              <div className="font-serif text-5xl font-bold text-[#0A0A0A]">{mockScore.score}</div>
+              <p className="text-[#6B6560] text-sm mt-1">Based on your most recent profile submission</p>
             </div>
             <button
               onClick={() => navigate('/demo')}
-              className="self-start sm:self-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl text-sm font-medium transition-colors"
+              className="self-start sm:self-auto px-5 py-2.5 bg-[#1A6B5A] hover:bg-[#155A4A] rounded-xl text-sm font-medium text-white transition-colors shadow-sm"
             >
               Update profile →
             </button>
@@ -82,48 +86,65 @@ export default function Dashboard() {
           {/* Stats row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
-              { label: 'Credit Score', value: '712', sub: '+12 this month', color: 'text-emerald-400' },
-              { label: 'Risk Tier', value: 'Low', sub: 'Top 30%', color: 'text-emerald-400' },
-              { label: 'SIP Capacity', value: '₹4,200', sub: 'Recommended / mo', color: 'text-blue-400' },
-              { label: 'Tax Saving Opp.', value: '₹12,400', sub: 'Estimated annual', color: 'text-violet-400' },
+              { label: 'Credit Score',    value: '712',    sub: '+12 this month',       color: 'text-emerald-700' },
+              { label: 'Risk Tier',       value: 'Low',    sub: 'Top 30%',              color: 'text-emerald-700' },
+              { label: 'SIP Capacity',    value: '₹4,200', sub: 'Recommended / mo',     color: 'text-[#1A6B5A]'  },
+              { label: 'Tax Saving Opp.', value: '₹12,400',sub: 'Estimated annual',     color: 'text-amber-700'  },
             ].map((s) => (
-              <div key={s.label} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                <p className="text-xs text-gray-500 mb-1">{s.label}</p>
+              <div key={s.label} className="bg-white border border-[#E8E4DC] rounded-xl p-4 shadow-sm">
+                <p className="text-xs text-[#A39E98] mb-1">{s.label}</p>
                 <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-                <p className="text-xs text-gray-600 mt-0.5">{s.sub}</p>
+                <p className="text-xs text-[#C4BFB8] mt-0.5">{s.sub}</p>
               </div>
             ))}
           </div>
 
           {/* Feature panels */}
           <div className="grid md:grid-cols-2 gap-6">
+            <div
+              className="bg-white border border-[#E8E4DC] rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:border-[#1A6B5A]/40 hover:shadow-md transition-all shadow-sm"
+              onClick={() => navigate('/portfolio')}
+            >
+              <div className="flex items-start justify-between">
+                <div className="w-12 h-12 rounded-xl bg-[#F5F0E8] flex items-center justify-center text-2xl">📊</div>
+                <span className="px-2.5 py-1 text-xs rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium">Live</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg mb-1 text-[#0A0A0A]">Zerodha Portfolio</h3>
+                <p className="text-sm text-[#A39E98]">View your holdings, P&L, and get AI-powered Buy/Hold/Sell recommendations per stock.</p>
+              </div>
+              <div className="mt-auto pt-4 border-t border-[#E8E4DC]">
+                <span className="text-sm text-[#1A6B5A] font-medium">Open Portfolio →</span>
+              </div>
+            </div>
+
             <PlaceholderCard
               icon="📈"
               title="SIP & ETF Recommendations"
-              subtitle="Personalized mutual fund and ETF picks based on your Low risk tier. Dynamic rebalancing suggestions coming next."
+              subtitle="Personalised mutual fund and ETF picks based on your Low risk tier. Dynamic rebalancing suggestions coming next."
               tag="Phase 3 — Coming Soon"
             />
             <PlaceholderCard
               icon="💰"
               title="Tax Optimizer & Harvesting Advisor"
-              subtitle="Connect your portfolio to get AI-powered tax-loss harvesting suggestions and Section 80C optimization."
+              subtitle="Connect your portfolio to get AI-powered tax-loss harvesting suggestions and Section 80C optimisation."
               tag="Phase 3 — Coming Soon"
             />
           </div>
 
-          {/* Zerodha / Upstox integration teaser */}
-          <div className="mt-6 p-6 rounded-2xl bg-gray-900 border border-gray-800 border-dashed">
+          {/* Broker integration teaser */}
+          <div className="mt-6 p-6 rounded-2xl bg-white border border-[#E8E4DC] border-dashed shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Broker Integration</p>
-                <h3 className="font-semibold text-lg">Connect Zerodha or Upstox</h3>
-                <p className="text-sm text-gray-500 mt-1">Link your brokerage account to enable real portfolio analysis and live recommendations.</p>
+                <p className="text-sm text-[#A39E98] mb-1">Broker Integration</p>
+                <h3 className="font-semibold text-lg text-[#0A0A0A]">Connect Zerodha or Upstox</h3>
+                <p className="text-sm text-[#A39E98] mt-1">Link your brokerage account to enable real portfolio analysis and live recommendations.</p>
               </div>
               <div className="flex gap-3">
-                <button className="px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-sm font-medium text-gray-300 hover:border-gray-600 transition-colors">
+                <button className="px-4 py-2 rounded-lg bg-[#F5F0E8] border border-[#E8E4DC] text-sm font-medium text-[#6B6560] hover:border-[#1A6B5A]/40 transition-colors">
                   Zerodha Kite
                 </button>
-                <button className="px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-sm font-medium text-gray-300 hover:border-gray-600 transition-colors">
+                <button className="px-4 py-2 rounded-lg bg-[#F5F0E8] border border-[#E8E4DC] text-sm font-medium text-[#6B6560] hover:border-[#1A6B5A]/40 transition-colors">
                   Upstox
                 </button>
               </div>

@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import score
+from routers import portfolio
 
-app = FastAPI(title="Credit Scoring API")
+app = FastAPI(title="CreditAI API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -12,6 +13,7 @@ app.add_middleware(
 )
 
 app.include_router(score.router)
+app.include_router(portfolio.router)
 
 @app.get("/")
 def root():

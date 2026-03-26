@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+xgboost
+shap
+scikit-learn
+pandas
+numpy
+anthropic
+kiteconnect
+python-dotenv
+requests
