@@ -126,8 +126,11 @@ export default function Portfolio() {
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput,    setChatInput]    = useState('')
   const [chatLoading,  setChatLoading]  = useState(false)
+  const [advisor,      setAdvisor]      = useState(null)
   const chatEndRef   = useRef(null)
   const chatInputRef = useRef(null)
+
+  const persona = (() => { try { return JSON.parse(localStorage.getItem('nuvest_persona')) } catch { return null } })()
 
   // ── on mount ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -197,6 +200,7 @@ export default function Portfolio() {
       setHoldings(data.holdings || [])
       if (data.overview) setOverview(data.overview)
       setAnalysis(data.analysis || null)
+      setAdvisor(data.advisor || null)
     } catch (e) { setAiError(e.message) }
     finally { setLoadingAI(false) }
   }
@@ -577,10 +581,15 @@ export default function Portfolio() {
 
             {/* AI Assessment */}
             <div style={{ marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: advisor ? 4 : 10 }}>
                 <p style={{ ...S.sectionLabel, margin: 0 }}>AI Assessment</p>
                 {loadingAI && <Spinner sm />}
               </div>
+              {advisor && (
+                <p style={{ fontSize: 10, color: '#9CA3AF', fontStyle: 'italic', margin: '0 0 10px' }}>
+                  Advised by {advisor}
+                </p>
+              )}
 
               {aiError && (
                 <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 10px', fontSize: 11, color: '#DC2626', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
@@ -678,7 +687,7 @@ export default function Portfolio() {
               <input
                 ref={chatInputRef}
                 type="text"
-                placeholder="Ask a question…"
+                placeholder={persona?.name ? `Ask ${persona.name}…` : 'Ask a question…'}
                 value={chatInput}
                 onChange={e => setChatInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() } }}
@@ -694,6 +703,18 @@ export default function Portfolio() {
                   : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>}
               </button>
             </div>
+
+            {!persona && (
+              <div style={{ padding: '0 10px 10px' }}>
+                <button onClick={() => navigate('/ai-persona')}
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 10, color: '#9CA3AF', fontFamily: 'Inter, sans-serif', textAlign: 'left' }}
+                  onMouseOver={e => e.currentTarget.style.color = '#1A6B5A'}
+                  onMouseOut={e  => e.currentTarget.style.color = '#9CA3AF'}
+                >
+                  💡 Set an AI persona for personalised advice →
+                </button>
+              </div>
+            )}
 
           </div>
         </aside>
