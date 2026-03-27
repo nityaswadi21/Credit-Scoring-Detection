@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API } from '../api'
 
 // ─── Avatar SVGs ─────────────────────────────────────────────────────────────
 
@@ -246,7 +247,7 @@ export default function AIPersona() {
     }
 
     try {
-      const res = await fetch('/portfolio/persona', {
+      const res = await fetch(`${API}/portfolio/persona`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(persona),

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API } from '../api'
 import ScoreCard from '../components/ScoreCard'
 import ShapChart from '../components/ShapChart'
 
@@ -131,7 +132,7 @@ export default function Demo() {
     setError(null)
     setResult(null)
     try {
-      const res = await fetch('/predict', {
+      const res = await fetch(`${API}/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

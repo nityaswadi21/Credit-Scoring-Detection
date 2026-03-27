@@ -9,6 +9,7 @@ import {
   ReferenceLine, ResponsiveContainer, CartesianGrid,
   BarChart, Bar, Cell,
 } from 'recharts'
+import { API } from '../api'
 
 const C = {
   primary: '#1a5c45', accent: '#2d7a5e',
@@ -169,7 +170,7 @@ export default function TrajectoryPage() {
 
   useEffect(() => {
     if (!score || score >= 750) return
-    fetch(`/optimize/suggest?current_score=${Math.round(score)}`)
+    fetch(`${API}/optimize/suggest?current_score=${Math.round(score)}`)
       .then(r => r.json()).then(d => setSuggestData(d)).catch(() => {})
   }, [score])
 
@@ -179,7 +180,7 @@ export default function TrajectoryPage() {
   useEffect(() => {
     if (!activeFeatures) return
     setLoadingTraj(true)
-    fetch(`/trajectory?months=${chartMonths}`, {
+    fetch(`${API}/trajectory?months=${chartMonths}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(activeFeatures),
@@ -194,7 +195,7 @@ export default function TrajectoryPage() {
     if (!date || !feats) return
     setLoadingPlan(true); setPlanError(null)
     try {
-      const res = await fetch(`/optimize?target_date=${date}`, {
+      const res = await fetch(`${API}/optimize?target_date=${date}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(feats),
       })
@@ -211,8 +212,8 @@ export default function TrajectoryPage() {
     setLoadingPlan(true)
     try {
       const [scoreRes, optRes] = await Promise.all([
-        fetch('/score', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newFeats) }).then(r => r.json()),
-        fetch(`/optimize?target_date=${planData.target_date}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newFeats) }).then(r => r.json()),
+        fetch(`${API}/score`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newFeats) }).then(r => r.json()),
+        fetch(`${API}/optimize?target_date=${planData.target_date}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newFeats) }).then(r => r.json()),
       ])
       setActiveFeatures(newFeats)
       setPlanData(optRes)

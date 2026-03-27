@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API } from '../api'
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 // ─── Formatters ────────────────────────────────────────────────────────────────
@@ -150,7 +151,7 @@ export default function Portfolio() {
     setLoadingData(true); setError(null)
     try {
       const [sRes, hRes, oRes] = await Promise.all([
-        fetch('/portfolio/status'), fetch('/portfolio/holdings'), fetch('/portfolio/overview'),
+        fetch(`${API}/portfolio/status`), fetch(`${API}/portfolio/holdings`), fetch(`${API}/portfolio/overview`),
       ])
       if (!sRes.ok || !hRes.ok || !oRes.ok)
         throw new Error(`Data fetch failed (${sRes.status}/${hRes.status}/${oRes.status})`)
@@ -164,7 +165,7 @@ export default function Portfolio() {
   async function handleConnect() {
     setLoadingConn(true); setError(null)
     try {
-      const res = await fetch('/portfolio/login')
+      const res = await fetch(`${API}/portfolio/login`)
       if (!res.ok) throw new Error(await parseErr(res))
       const { login_url } = await res.json()
       window.location.href = login_url
@@ -175,7 +176,7 @@ export default function Portfolio() {
   async function handleCallback(requestToken) {
     setLoadingData(true); setError(null)
     try {
-      const res = await fetch(`/portfolio/callback?request_token=${encodeURIComponent(requestToken)}`)
+      const res = await fetch(`${API}/portfolio/callback?request_token=${encodeURIComponent(requestToken)}`)
       if (!res.ok) throw new Error(await parseErr(res))
       await loadAll()
     } catch (e) { setError('Token exchange failed: ' + e.message); setLoadingData(false) }
@@ -183,7 +184,7 @@ export default function Portfolio() {
 
   // ── Disconnect ────────────────────────────────────────────────────────────────
   async function handleDisconnect() {
-    try { await fetch('/portfolio/logout', { method: 'DELETE' }) } catch {}
+    try { await fetch(`${API}/portfolio/logout`, { method: 'DELETE' }) } catch {}
     setAnalysis(null); await loadAll()
   }
 
@@ -191,7 +192,7 @@ export default function Portfolio() {
   async function runAnalysis() {
     setLoadingAI(true); setAiError(null)
     try {
-      const res = await fetch('/portfolio/analyze', {
+      const res = await fetch(`${API}/portfolio/analyze`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mock: status.mode === 'mock' }),
       })
@@ -216,7 +217,7 @@ export default function Portfolio() {
     setChatInput('')
     setChatLoading(true)
     try {
-      const res = await fetch('/portfolio/chat', {
+      const res = await fetch(`${API}/portfolio/chat`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message, holdings, overview, health_score: healthScore }),
       })

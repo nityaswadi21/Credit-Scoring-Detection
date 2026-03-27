@@ -7,6 +7,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ReferenceLine, ResponsiveContainer,
 } from 'recharts'
+import { API } from '../api'
 
 // ── Theme (matches Demo.jsx palette) ─────────────────────────────────────────
 const C = {
@@ -147,7 +148,7 @@ export default function TrajectorySection({ score, features }) {
   // Load suggest-date hint
   useEffect(() => {
     if (!score || score >= 750) return
-    fetch(`/optimize/suggest?current_score=${Math.round(score)}`)
+    fetch(`${API}/optimize/suggest?current_score=${Math.round(score)}`)
       .then(r => r.json())
       .then(d => setSuggestData(d))
       .catch(() => {})
@@ -157,7 +158,7 @@ export default function TrajectorySection({ score, features }) {
   useEffect(() => {
     if (!activeFeatures) return
     setLoadingTraj(true)
-    fetch(`/trajectory?months=${chartMonths}`, {
+    fetch(`${API}/trajectory?months=${chartMonths}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(activeFeatures),
@@ -179,7 +180,7 @@ export default function TrajectorySection({ score, features }) {
     setLoadingPlan(true)
     setPlanError(null)
     try {
-      const res = await fetch(`/optimize?target_date=${date}`, {
+      const res = await fetch(`${API}/optimize?target_date=${date}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(feats),
@@ -208,7 +209,7 @@ export default function TrajectorySection({ score, features }) {
     })
     setLoadingPlan(true)
     try {
-      const optRes = await fetch(`/optimize?target_date=${planData.target_date}`, {
+      const optRes = await fetch(`${API}/optimize?target_date=${planData.target_date}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newFeats),
